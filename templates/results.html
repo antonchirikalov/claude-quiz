@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Results — Claude Quiz{% endblock %}
+
+{% block content %}
+<section class="results">
+  <h1>Quiz Complete</h1>
+
+  <div class="score-summary">
+    <div class="score-pct">{{ score.pct }}%</div>
+    <div class="score-fraction">{{ score.correct }} / {{ score.total }} correct</div>
+  </div>
+
+  <h2>Question Breakdown</h2>
+  <ol class="breakdown">
+    {% for item in score.breakdown %}
+      <li class="breakdown-item {% if item.correct %}item-correct{% else %}item-wrong{% endif %}">
+        <span class="domain-tag">{{ item.question.domain }}</span>
+        <p class="stem">{{ item.question.stem }}</p>
+        <p class="breakdown-answer">
+          Your answer: <strong>{{ item.chosen or '—' }}</strong>
+          {% if not item.correct %}
+            | Correct: <strong>{{ item.question.answer }}</strong>
+          {% endif %}
+          {% if item.correct %}✓{% else %}✗{% endif %}
+        </p>
+        <p class="explanation-small">{{ item.question.explanation }}</p>
+      </li>
+    {% endfor %}
+  </ol>
+
+  <a href="{{ url_for('quiz.index') }}?restart=1" class="btn btn-primary">Try Again</a>
+</section>
+{% endblock %}

@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}{{ question.domain }} — Claude Quiz{% endblock %}
+
+{% block content %}
+<article class="question-card">
+  <header class="question-header">
+    <span class="domain-tag">{{ question.domain }}</span>
+    <span class="question-id">{{ question.id }}</span>
+  </header>
+
+  <p class="stem">{{ question.stem }}</p>
+
+  {% if question.id in answered %}
+    <p class="already-answered">You already answered this question.
+      <a href="{{ url_for('quiz.answer', qid=question.id) }}">View your answer →</a>
+    </p>
+  {% else %}
+    <form method="post" action="{{ url_for('quiz.submit_answer', qid=question.id) }}">
+      <fieldset>
+        <legend class="sr-only">Select your answer</legend>
+        {% for key, text in question.choices.items() %}
+          <label class="choice-label">
+            <input type="radio" name="choice" value="{{ key }}" required>
+            <span class="choice-key">{{ key }}</span>
+            <span class="choice-text">{{ text }}</span>
+          </label>
+        {% endfor %}
+      </fieldset>
+      <button type="submit" class="btn btn-primary">Submit Answer</button>
+    </form>
+  {% endif %}
+</article>
+{% endblock %}
