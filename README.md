@@ -1,49 +1,49 @@
 # Claude Certified Architect — Practice Quiz
 
-Flask + Jinja2 web app для подготовки к экзамену **Claude Certified Architect (CCA-F)**.
+A Flask + Jinja2 web app for studying the **Claude Certified Architect (CCA-F)** exam.
 
-## Что внутри
+## Features
 
-- Вопросы по всем 5 доменам экзамена с объяснениями правильных ответов
-- Случайная выборка вопросов при каждом запуске
-- Показ результата с разбором ошибок в конце
+- Questions across all 5 exam domains with explanations for every answer
+- Random question selection on each quiz run
+- Results page with a full breakdown of correct and incorrect answers
 
-## Домены
+## Exam Domains
 
-| Домен | Вес |
-|-------|-----|
+| Domain | Weight |
+|--------|--------|
 | Agentic Architecture & Claude Code | 27% |
 | Claude Code Configuration | 20% |
 | Prompt Engineering | 20% |
 | Tools & MCP | 18% |
 | Context Management | 15% |
 
-## Быстрый старт
+## Quick Start
 
 ```bash
 pip install -r requirements.txt
 flask --app app run --debug
 ```
 
-Открыть: http://localhost:5000
+Open: http://localhost:5000
 
-## Генерация вопросов
+## Generating Questions
 
-Банк вопросов хранится в `data/questions.json`. Пополнять его можно двумя способами.
+The question bank lives in `data/questions.json`. There are two ways to add more questions.
 
-### Способ 1 — Prompt-файл в VS Code Agent Chat (рекомендуется)
+### Option 1 — Prompt file in VS Code Agent Chat (recommended)
 
-Требует: расширение **GitHub Copilot** + подключённый **Tavily MCP**.
+Requirements: **GitHub Copilot** extension + **Tavily MCP** connected.
 
-1. Открыть VS Code → Agent Chat (`Ctrl+Alt+I`)
-2. Нажать кнопку **Attach** → **Prompt...** → выбрать `scripts/generate_questions.prompt.md`
-3. Агент сам найдёт материалы через Tavily и допишет вопросы в `data/questions.json`
+1. Open VS Code → Agent Chat (`Ctrl+Alt+I`)
+2. Click **Attach** → **Prompt...** → select `scripts/generate_questions.prompt.md`
+3. The agent searches the web via Tavily and appends new questions to `data/questions.json`
 
-Промпт настроен на параллельный поиск по всем доменам сразу. Количество вопросов на домен задаётся переменной `count` (по умолчанию 10).
+The prompt runs searches for all domains in parallel. The number of questions per domain is controlled by the `count` variable (default: 10).
 
-#### Подключение Tavily MCP
+#### Connecting Tavily MCP
 
-В файл настроек VS Code (`settings.json`) добавить:
+Add the following to your VS Code `settings.json`:
 
 ```json
 "mcp": {
@@ -52,44 +52,44 @@ flask --app app run --debug
       "command": "npx",
       "args": ["-y", "tavily-mcp"],
       "env": {
-        "TAVILY_API_KEY": "tvly-ваш-ключ"
+        "TAVILY_API_KEY": "tvly-your-key-here"
       }
     }
   }
 }
 ```
 
-Ключ можно получить бесплатно на [app.tavily.com](https://app.tavily.com).
+Get a free API key at [app.tavily.com](https://app.tavily.com).
 
-### Способ 2 — CLI-скрипт с Anthropic API
+### Option 2 — CLI script with Anthropic API
 
 ```bash
 export ANTHROPIC_API_KEY=sk-ant-...
 python scripts/generate_questions.py
 ```
 
-Требует действующий `ANTHROPIC_API_KEY`.
+Requires a valid `ANTHROPIC_API_KEY`.
 
-## Тесты
+## Tests
 
 ```bash
 PYTHONPATH=. pytest -q
 ```
 
-## Структура проекта
+## Project Structure
 
 ```
 app/
-  __init__.py       — фабрика Flask-приложения
-  quiz.py           — загрузка и выборка вопросов
-  routes.py         — маршруты (/, /question, /answer, /results)
-  schema.py         — Pydantic-схема вопроса
-  errors.py         — типизированные исключения
+  __init__.py       — Flask application factory
+  quiz.py           — question loading and selection logic
+  routes.py         — routes (/, /question, /answer, /results)
+  schema.py         — Pydantic question schema
+  errors.py         — typed exceptions
 data/
-  questions.json    — банк вопросов (источник истины)
+  questions.json    — question bank (source of truth)
 scripts/
-  generate_questions.py          — CLI-генератор (Anthropic API)
-  generate_questions.prompt.md   — агентный промпт для VS Code
-templates/          — Jinja2-шаблоны
-tests/              — pytest-тесты
+  generate_questions.py          — CLI generator (Anthropic API)
+  generate_questions.prompt.md   — agent prompt for VS Code
+templates/          — Jinja2 templates
+tests/              — pytest test suite
 ```
