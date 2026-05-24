@@ -28,6 +28,18 @@ nav {
 .restart-link { color: #aaa; font-size: 0.9rem; text-decoration: none; }
 .restart-link:hover { color: #fff; }
 
+.nav-score {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #fff;
+  background: rgba(255,255,255,0.12);
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-variant-numeric: tabular-nums;
+}
+.nav-score-label { font-weight: 400; opacity: 0.8; }
+.nav-score-pct { opacity: 0.7; font-size: 0.8rem; }
+
 main {
   flex: 1;
   max-width: 860px;
@@ -99,7 +111,7 @@ footer {
   align-items: center;
   margin-bottom: 1rem;
 }
-.question-id { font-size: 0.75rem; color: #999; }
+.question-progress { font-size: 0.8rem; color: #6b7280; font-variant-numeric: tabular-nums; }
 
 .stem { font-size: 1.1rem; margin-bottom: 1.5rem; }
 

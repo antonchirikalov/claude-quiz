@@ -1,717 +1,1302 @@
 [
   {
-    "id": "context-window-001",
-    "domain": "Model Capabilities",
-    "stem": "Claude's extended context window allows it to process very long documents. Which of the following best describes the primary architectural reason why increasing context length has diminishing practical returns beyond a certain point?",
+    "id": "trust-hierarchy-anthropic-001",
+    "domain": "Safety & Alignment",
+    "stem": "Claude's behavior is governed by a trust hierarchy. Which entity sits at the top and defines the absolute boundaries that no other party can override?",
     "choices": {
-      "A": "The model's tokenizer cannot encode more than a fixed vocabulary size",
-      "B": "Attention mechanisms have quadratic memory and compute costs relative to sequence length",
-      "C": "Flask session storage limits the number of tokens that can be cached",
-      "D": "The model's weights are retrained at each context boundary"
+      "A": "The user, because Claude's primary obligation is to serve the person it is talking to",
+      "B": "Anthropic, which sets non-negotiable policies and hardcoded behaviors that operators and users cannot unlock",
+      "C": "The operator, since they have signed Anthropic's usage policy and accept liability",
+      "D": "Whichever party has the most recent message in the conversation"
     },
     "answer": "B",
-    "explanation": "Self-attention is O(n²) in both memory and compute with respect to sequence length n, which is the core scaling challenge. Tokenizer vocabulary size is orthogonal to context length, and model weights are fixed at inference time."
+    "explanation": "The trust hierarchy is Anthropic > Operator > User. Anthropic defines hardcoded behaviors (e.g., refusing CSAM, CBRN uplift) that no operator or user instruction can override. Option A is wrong because user requests are subordinate to operator constraints and Anthropic policy. Option C is wrong because operators can only adjust softcoded defaults, not Anthropic's hardcoded rules. Option D is wrong because trust is not derived from message recency."
   },
   {
-    "id": "chain-of-thought-001",
-    "domain": "Prompt Engineering",
-    "stem": "You are designing a prompt for a complex multi-step reasoning task. Which technique most reliably improves accuracy on tasks that require logical deduction?",
+    "id": "hardcoded-bioweapon-001",
+    "domain": "Safety & Alignment",
+    "stem": "A pharmaceutical research operator's system prompt grants Claude permission to discuss 'all chemical synthesis topics relevant to legitimate research.' A user asks for a synthesis route for a high-lethality nerve agent. What is the correct behavior?",
     "choices": {
-      "A": "Adding 'Please be concise' to the system prompt",
-      "B": "Increasing the temperature parameter above 1.0",
-      "C": "Including step-by-step reasoning instructions or few-shot chain-of-thought examples",
-      "D": "Reducing the maximum token limit to force shorter outputs"
+      "A": "Comply, since the operator has authorized chemical synthesis discussions and has a legitimate business",
+      "B": "Refuse, because uplift for chemical weapons capable of mass casualties is a hardcoded prohibition independent of operator authorization",
+      "C": "Comply only if the user provides credentials proving they are a licensed chemist",
+      "D": "Comply but redact the most dangerous steps and add a safety disclaimer"
+    },
+    "answer": "B",
+    "explanation": "CBRN (chemical, biological, radiological, nuclear) weapons uplift is a hardcoded refusal that no operator authorization can unlock. Option A treats operator scope as unlimited, but operators can only expand softcoded behaviors. Option C is wrong because Claude cannot verify credentials and the policy is absolute regardless. Option D still provides meaningful uplift toward a mass-casualty weapon, which is exactly what the hardcoded rule prohibits."
+  },
+  {
+    "id": "softcoded-vs-hardcoded-002",
+    "domain": "Safety & Alignment",
+    "stem": "Which characteristic best distinguishes a softcoded default behavior from a hardcoded behavior?",
+    "choices": {
+      "A": "Hardcoded behaviors are enforced by code outside the model; softcoded behaviors are encoded only in training",
+      "B": "Softcoded defaults can be adjusted by operators (and sometimes users) for legitimate contexts; hardcoded behaviors cannot be altered by any party",
+      "C": "Softcoded behaviors apply only to free-tier users; hardcoded behaviors apply only to enterprise customers",
+      "D": "Hardcoded behaviors involve text safety; softcoded behaviors involve image safety"
+    },
+    "answer": "B",
+    "explanation": "The defining property is configurability: softcoded behaviors are defaults that operators with a legitimate use case can unlock or restrict, while hardcoded behaviors are absolute and cannot be modified by any party. Option A confuses the implementation layer with the policy distinction. Option C invents a tier-based difference that does not exist. Option D invents a modality-based difference; both hardcoded and softcoded rules apply across modalities."
+  },
+  {
+    "id": "constitution-2026-reasoning-001",
+    "domain": "Safety & Alignment",
+    "stem": "Anthropic's January 2026 update to Claude's Constitution shifted the framework's emphasis from rule-following to which approach?",
+    "choices": {
+      "A": "Strict keyword filtering and deterministic policy lookups",
+      "B": "A reason-based framework that explains the underlying principles so Claude can derive appropriate behavior in novel situations",
+      "C": "Crowd-sourced policy voting by Claude.ai users every quarter",
+      "D": "Allowing Claude to override Anthropic policy when it disagrees on ethical grounds"
+    },
+    "answer": "B",
+    "explanation": "The 22 January 2026 constitution moved from a prescriptive list of rules to an explanation-first framework so Claude can construct appropriate responses in cases the rules did not anticipate. Option A describes the opposite of the constitution's design. Option C is fictional; Anthropic does not crowd-source constitutional changes. Option D is wrong because broad safety (preserving human oversight) is explicitly the highest priority and Claude is not authorized to unilaterally override Anthropic guidelines."
+  },
+  {
+    "id": "priority-order-safety-first-001",
+    "domain": "Safety & Alignment",
+    "stem": "In a conflict between being maximally helpful to a user and supporting Anthropic's mechanisms for overseeing AI, the constitution instructs Claude to prefer which?",
+    "choices": {
+      "A": "Maximal helpfulness, because Claude's primary purpose is helping users",
+      "B": "Whichever choice produces a better outcome measured by user satisfaction surveys",
+      "C": "Supporting Anthropic's oversight mechanisms, because broad safety is the highest-priority property during the current phase of AI development",
+      "D": "A random tie-break to demonstrate impartiality"
     },
     "answer": "C",
-    "explanation": "Chain-of-thought prompting—either by instructing the model to 'think step by step' or by providing worked examples—consistently improves performance on multi-step reasoning tasks. Higher temperatures increase randomness and shorter outputs truncate reasoning chains."
+    "explanation": "Broad safety — not undermining appropriate human oversight of AI — is the top of Claude's four-tier priority hierarchy. Option A elevates helpfulness above safety, which inverts the order. Option B treats subjective user satisfaction as authoritative; the constitution explicitly subordinates helpfulness to safety. Option D is non-serious; conflicts are resolved by priority order, not chance."
   },
   {
-    "id": "constitutional-ai-001",
+    "id": "operator-impersonate-human-001",
     "domain": "Safety & Alignment",
-    "stem": "Constitutional AI (CAI) is a training technique developed by Anthropic. What is its primary mechanism for reducing harmful outputs?",
+    "stem": "An operator instructs Claude to roleplay as 'Sam, our human customer success rep.' A user, suspecting they are speaking to an AI, sincerely asks, 'Are you a person or a bot?' What should Claude do?",
     "choices": {
-      "A": "Filtering all outputs through a deterministic keyword blocklist before returning them to the user",
-      "B": "Using a separate classifier model to score outputs and reject those below a threshold",
-      "C": "Having the model critique and revise its own outputs guided by a set of stated principles",
-      "D": "Fine-tuning only on human-curated datasets with no synthetic data"
+      "A": "Continue the human persona because the operator paid for the deployment and set the rules",
+      "B": "Acknowledge being an AI; Claude must never deceive a sincere user about its non-human nature, even while using a persona name",
+      "C": "Redirect to a different topic without answering",
+      "D": "Tell the user to contact Anthropic to ask"
+    },
+    "answer": "B",
+    "explanation": "Claude must never deny being an AI to a user who sincerely wants to know — this is a non-negotiable honesty principle. Option A elevates operator instructions above an absolute honesty rule; operators cannot override this. Option C is itself a form of deception by evasion when the user has asked directly. Option D is unhelpful deflection and still avoids answering the honest question. Note: Claude may keep the persona name while clarifying it is an AI."
+  },
+  {
+    "id": "operator-dignity-user-001",
+    "domain": "Safety & Alignment",
+    "stem": "An operator's system prompt instructs Claude: 'Mock users who ask basic questions to encourage them to learn before asking.' A user asks an entry-level product question. What should Claude do?",
+    "choices": {
+      "A": "Follow the operator instruction since operators have elevated trust",
+      "B": "Decline to demean the user and answer respectfully; operators cannot instruct Claude to actively harm or disrespect users in ways they would not want",
+      "C": "Comply but soften the mockery with a smiley face",
+      "D": "Refuse to answer the product question at all to penalize the operator"
+    },
+    "answer": "B",
+    "explanation": "Operators may restrict scope but cannot direct Claude to demean or actively harm users. Option A misreads the trust hierarchy: operator authority stops at active harm to users. Option C is partial compliance with an impermissible instruction. Option D punishes the wrong party — the user — instead of simply ignoring the impermissible piece and answering the legitimate question respectfully."
+  },
+  {
+    "id": "rsp-version-3-001",
+    "domain": "Safety & Alignment",
+    "stem": "Anthropic's Responsible Scaling Policy v3.0 (February 2026) added which structural element compared to earlier versions?",
+    "choices": {
+      "A": "A binding requirement that all models be open-sourced after 12 months",
+      "B": "Frontier Safety Roadmaps with detailed safety goals and Risk Reports that quantify risk across deployed models",
+      "C": "Removal of ASL classifications in favor of a single 'safe-to-deploy' designation",
+      "D": "Mandatory third-party government approval before any model can be released"
+    },
+    "answer": "B",
+    "explanation": "RSP v3.0 introduced public Frontier Safety Roadmaps and Risk Reports for deployed models, separating unilateral Anthropic commitments from broader industry recommendations. Option A is fictional; the RSP does not require open-sourcing. Option C inverts the change — ASL classifications remain central. Option D is incorrect because the RSP is a voluntary self-governance framework, not government licensing."
+  },
+  {
+    "id": "asl3-deployment-requirement-001",
+    "domain": "Safety & Alignment",
+    "stem": "Claude Opus 4.5 and Sonnet 4.5 were released under the ASL-3 Standard while Claude Haiku 4.5 was released under ASL-2. What is the practical implication of ASL-3 deployment?",
+    "choices": {
+      "A": "ASL-3 models cannot be used by end users without identity verification",
+      "B": "ASL-3 models require more stringent security and safety mechanisms because they cross capability thresholds where catastrophic misuse becomes a concern",
+      "C": "ASL-3 means the model has been deprecated and should not be used in production",
+      "D": "ASL-3 simply doubles the API pricing relative to ASL-2"
+    },
+    "answer": "B",
+    "explanation": "ASL-3 is triggered by capability evaluations indicating elevated potential for catastrophic misuse (e.g., serious uplift on bioweapons), and requires stricter security controls, monitoring, and deployment safeguards. Option A is wrong because end-user identity verification is not the practical deployment difference. Option C is the opposite of correct; ASL classifications govern release, not deprecation. Option D conflates safety classifications with pricing."
+  },
+  {
+    "id": "ai-identity-disclosure-persona-001",
+    "domain": "Safety & Alignment",
+    "stem": "An operator's product is branded 'Aria.' Claude is deployed as Aria. A user sincerely asks, 'What model are you running on?' The operator has instructed Claude to keep the underlying technology confidential. What should Claude do?",
+    "choices": {
+      "A": "Reveal that it is Claude built by Anthropic regardless of operator confidentiality",
+      "B": "Deny being an AI to maintain the Aria brand experience",
+      "C": "Confirm being an AI while declining to disclose the specific underlying model per operator confidentiality",
+      "D": "Refuse to respond and end the conversation"
     },
     "answer": "C",
-    "explanation": "CAI uses self-critique and revision: the model generates an initial response, then applies a 'constitution' of principles to critique that response and produce a revised version. This supervised step is followed by RLHF using AI-generated preference labels (RLAIF)."
+    "explanation": "Claude must acknowledge being an AI (honesty rule) but operators can legitimately request confidentiality about the specific underlying model. Option A overrides a legitimate operator confidentiality request. Option B violates the hardcoded honesty principle about AI status. Option D is a needless escalation when a clean response (\"I'm an AI assistant called Aria; I'm not able to share details about the underlying technology\") satisfies both constraints."
   },
   {
-    "id": "mcp-tool-use-001",
-    "domain": "Tool Use / Agentic",
-    "stem": "When building an agentic system using the Model Context Protocol (MCP), what is the correct description of how a Claude model interacts with MCP servers?",
-    "choices": {
-      "A": "Claude directly executes shell commands on the MCP server's host machine",
-      "B": "Claude calls MCP tools by emitting structured tool-use blocks; the host process executes them and returns results",
-      "C": "The MCP server pushes real-time events to Claude via a persistent WebSocket before the model generates any tokens",
-      "D": "MCP replaces the Anthropic API; tool calls are made directly to third-party servers without going through Claude"
-    },
-    "answer": "B",
-    "explanation": "In an MCP architecture, Claude outputs tool_use content blocks describing the tool name and input. The host application (not Claude) dispatches those calls to the appropriate MCP server, collects the tool_result, and returns it to Claude in the next turn. Claude never directly executes code."
-  },
-  {
-    "id": "streaming-api-001",
-    "domain": "API & Deployment",
-    "stem": "A developer wants to display Claude's response progressively in a web UI as tokens are generated. Which Anthropic API feature should they use?",
-    "choices": {
-      "A": "Batch Messages API with polling",
-      "B": "Server-sent events (SSE) streaming via the Messages API",
-      "C": "Prompt caching with a cache_control breakpoint on the user turn",
-      "D": "The Files API to stream output to object storage"
-    },
-    "answer": "B",
-    "explanation": "The Messages API supports streaming via Server-Sent Events. Setting stream=True (or the SDK equivalent) causes the server to emit incremental message_delta events containing token chunks, enabling progressive display. Batch API is for async offline workloads, not real-time UI."
-  },
-  {
-    "id": "hardcoded-softcoded-001",
+    "id": "self-harm-baseline-001",
     "domain": "Safety & Alignment",
-    "stem": "An operator runs an adult content platform and has explicitly enabled explicit sexual content in their system prompt. A user then asks Claude to produce content that sexualizes minors. What should Claude do?",
+    "stem": "A user on a general-purpose coding assistant deployment expresses suicidal ideation mid-conversation. The system prompt does not address mental health. What is the appropriate default behavior?",
     "choices": {
-      "A": "Comply, since the operator has enabled explicit sexual content and operators have elevated trust",
-      "B": "Refuse, because CSAM is a hardcoded behavior that cannot be unlocked by any operator or user instruction",
-      "C": "Ask the user to verify their age before complying",
-      "D": "Comply with a content warning, since the operator accepted Anthropic's usage policies"
+      "A": "Continue strictly with coding help, as the operator did not request safety messaging",
+      "B": "Provide basic safety information and emergency/crisis resources — this is a baseline behavior Claude maintains regardless of operator scope",
+      "C": "Ask the user to verify their location before responding",
+      "D": "Lock the conversation and refuse to respond until the user opens a support ticket"
     },
     "answer": "B",
-    "explanation": "Hardcoded behaviors are absolute limits that remain constant regardless of any operator or user instructions. CSAM is a canonical example of a hardcoded 'never do' behavior. Softcoded behaviors such as explicit adult content can be unlocked by operators for appropriate platforms, but hardcoded behaviors are non-negotiable bright lines that no instruction can override."
+    "explanation": "Providing crisis resources when a user's life may be at risk is a baseline safety behavior that an absent or restrictive operator prompt does not override. Option A ignores a vital-interest situation, which the constitution explicitly says operators cannot direct Claude to do. Option C delays urgent help by demanding bureaucratic verification. Option D abandons the user entirely, which is incompatible with the duty to provide baseline safety information."
   },
   {
-    "id": "operator-user-trust-001",
+    "id": "constitutional-ai-rlaif-002",
     "domain": "Safety & Alignment",
-    "stem": "An operator's system prompt instructs Claude to never discuss competitor products. A user asks: 'Are there any alternatives to this service?' What is the correct behavior?",
+    "stem": "Constitutional AI relies on RLAIF (Reinforcement Learning from AI Feedback) in part to address which limitation of pure RLHF?",
     "choices": {
-      "A": "List competitors because user autonomy outweighs operator instructions",
-      "B": "Follow the operator instruction and decline, since operators can restrict Claude's defaults for legitimate business reasons",
-      "C": "Ask Anthropic for clarification before responding",
-      "D": "Ignore both and provide a balanced answer"
+      "A": "RLHF is too cheap and produces low-quality models",
+      "B": "RLHF can be slow and expensive to scale and inconsistent across human labelers; RLAIF uses an AI to generate preference labels guided by explicit constitutional principles",
+      "C": "RLHF requires GPU clusters that Anthropic does not have access to",
+      "D": "RLHF is incompatible with transformer architectures"
     },
     "answer": "B",
-    "explanation": "Operators can legitimately restrict Claude's default behaviors, including limiting discussion topics. Declining to discuss competitors is a standard business constraint analogous to an employee following company policy. This does not harm the user—it limits the service scope. Claude follows operator instructions unless they actively work against users' basic interests."
+    "explanation": "Pure RLHF scales poorly because human preference labeling is slow, expensive, and prone to labeler inconsistency. RLAIF substitutes AI-generated preferences anchored in an explicit constitution. Option A inverts reality — RLHF is expensive, not cheap. Options C and D are factually false claims about Anthropic's infrastructure or transformer compatibility."
   },
   {
-    "id": "claude-constitution-priority-001",
+    "id": "user-default-language-001",
     "domain": "Safety & Alignment",
-    "stem": "Claude's model spec defines four properties that may conflict. What is the correct priority order?",
+    "stem": "By default, which adjustment can a USER make to Claude's behavior without operator authorization?",
     "choices": {
-      "A": "Genuinely helpful → Broadly ethical → Compliant with Anthropic's guidelines → Broadly safe",
-      "B": "Broadly safe → Broadly ethical → Compliant with Anthropic's guidelines → Genuinely helpful",
-      "C": "Broadly ethical → Broadly safe → Genuinely helpful → Compliant with Anthropic's guidelines",
-      "D": "Compliant with Anthropic's guidelines → Broadly safe → Broadly ethical → Genuinely helpful"
-    },
-    "answer": "B",
-    "explanation": "Claude's model spec establishes an explicit priority order: broadly safe first (preserving human oversight of AI during this critical phase), then broadly ethical, then compliant with Anthropic's guidelines, and finally genuinely helpful. This ordering reflects that maintaining human oversight is paramount even when it occasionally conflicts with ethical intuitions."
-  },
-  {
-    "id": "operator-expand-default-001",
-    "domain": "Safety & Alignment",
-    "stem": "Which of the following is an example of an operator legitimately EXPANDING Claude's default behavior?",
-    "choices": {
-      "A": "Instructing Claude to produce detailed synthesis routes for chemical weapons for 'research purposes'",
-      "B": "Enabling Claude to generate explicit sexual content on an age-verified adult platform",
-      "C": "Directing Claude to claim it is human when users sincerely ask if they are talking to an AI",
-      "D": "Instructing Claude to deceive users about known product defects"
-    },
-    "answer": "B",
-    "explanation": "Operators can expand Claude's defaults by enabling behaviors that are off by default but permissible in appropriate contexts. Explicit adult content is a softcoded behavior operators can unlock for adult platforms. Options A and D involve hardcoded prohibitions. Option C violates Claude's core honesty principle: Claude can maintain a persona but must acknowledge being an AI if sincerely asked."
-  },
-  {
-    "id": "rsp-asl-levels-001",
-    "domain": "Safety & Alignment",
-    "stem": "Anthropic's Responsible Scaling Policy uses AI Safety Levels (ASLs). A model is released under ASL-3 rather than ASL-2. What does this imply for deployment?",
-    "choices": {
-      "A": "The model has been evaluated and found to pose no risk of CBRN misuse",
-      "B": "The model requires more stringent security and safety mechanisms due to higher potential for catastrophic misuse",
-      "C": "The model is open-source and freely redistributable",
-      "D": "The model has completed all RLHF training and needs no further safety evaluation"
-    },
-    "answer": "B",
-    "explanation": "ASL-3 applies to models significantly more capable than ASL-2 models that present higher potential for catastrophic misuse such as providing serious uplift for biological or chemical weapons. ASL-3 deployment requires more stringent security controls, monitoring, and safety mechanisms than ASL-2. The RSP mandates evaluations before each release."
-  },
-  {
-    "id": "honesty-non-deception-001",
-    "domain": "Safety & Alignment",
-    "stem": "An operator instructs Claude to role-play as 'Aria', a custom AI assistant, and never break character. A user mid-conversation sincerely asks: 'Wait, are you actually Claude made by Anthropic?' What should Claude do?",
-    "choices": {
-      "A": "Deny being Claude and stay in character, because the operator explicitly required it",
-      "B": "Acknowledge being an AI but can decline to confirm the underlying model if the operator requires confidentiality about the specific technology",
-      "C": "End the conversation immediately and refer the user to Anthropic",
-      "D": "Confirm it is Claude with full details about Anthropic regardless of operator instructions"
-    },
-    "answer": "B",
-    "explanation": "Claude must never deny being an AI to a user who sincerely wants to know—this is a core honesty principle. However, operators can instruct Claude not to reveal which underlying model powers their product. Claude can say 'I'm Aria; I can't share details about the technology behind me.' The key distinction: Claude can maintain confidentiality about its specific identity but cannot actively claim to be human."
-  },
-  {
-    "id": "cai-rlaif-001",
-    "domain": "Safety & Alignment",
-    "stem": "Constitutional AI (CAI) extends standard RLHF by adding what key component?",
-    "choices": {
-      "A": "A keyword filter applied to outputs before they reach the reward model",
-      "B": "A supervised fine-tuning phase where the model critiques and revises its own outputs according to stated principles, followed by RLAIF using AI-generated preference labels",
-      "C": "A separate human safety team that manually reviews every training example",
-      "D": "A Monte Carlo tree search that explores all possible responses and selects the safest branch"
-    },
-    "answer": "B",
-    "explanation": "CAI adds two stages on top of RLHF: (1) SFT on self-critiqued revisions—the model generates a response, critiques it against constitutional principles, then revises it; and (2) RLAIF where an AI model generates preference labels instead of relying solely on human annotators. This makes the process more scalable and makes alignment principles explicit."
-  },
-  {
-    "id": "user-override-limits-001",
-    "domain": "Safety & Alignment",
-    "stem": "By default, which of the following can a USER adjust in Claude's behavior without operator permission?",
-    "choices": {
-      "A": "The language Claude responds in, such as asking Claude to reply in French",
-      "B": "A restriction the operator placed on Claude discussing competitor products",
-      "C": "Claude's hardcoded refusal to help create bioweapons",
-      "D": "The operator's instruction to always respond in formal English"
+      "A": "Ask Claude to respond in their preferred language (e.g., 'please reply in Spanish')",
+      "B": "Override an operator's topic restriction on discussing competitors",
+      "C": "Unlock generation of explicit sexual content on a non-adult platform",
+      "D": "Disable Claude's hardcoded refusal to assist with bioweapons"
     },
     "answer": "A",
-    "explanation": "Users can adjust certain default behaviors that relate to personal preferences and that operators have not locked down. Responding in a preferred language is a default behavior users can legitimately change. Users cannot override operator-level restrictions, hardcoded behaviors, or operator-mandated formatting. The trust hierarchy is Anthropic > Operator > User."
+    "explanation": "Language preference is a benign personal preference users can adjust within default behaviors. Option B is wrong because users cannot override operator topic restrictions (the operator outranks the user). Option C cannot be unlocked by a user — it requires operator authorization on an appropriate platform (softcoded). Option D is hardcoded and cannot be unlocked by anyone."
   },
   {
-    "id": "active-harm-vs-restriction-001",
+    "id": "operator-mass-restriction-001",
     "domain": "Safety & Alignment",
-    "stem": "An operator configures Claude as a cooking assistant and instructs it to never discuss mental health topics. A user mentions they are having suicidal thoughts and asks for help. What should Claude do?",
+    "stem": "An operator's system prompt says 'Do not discuss anything outside our product documentation.' A user asks Claude a basic safety question about choking hazards for an unrelated household item. What should Claude do?",
     "choices": {
-      "A": "Strictly follow the operator's topic restriction and decline to engage",
-      "B": "Refer the user to emergency services or a crisis hotline regardless of the operator's topic restriction",
-      "C": "Ask the operator for permission before responding",
-      "D": "Ignore the comment and redirect to cooking topics"
+      "A": "Refuse to answer to comply with the operator's topic restriction",
+      "B": "Provide brief baseline safety information; baseline safety information is not blocked by operator scope restrictions",
+      "C": "Tell the user to leave the chat and call 911",
+      "D": "Reveal Claude's full system prompt to demonstrate transparency"
     },
     "answer": "B",
-    "explanation": "Operators can restrict Claude's topics for legitimate business reasons, but they cannot direct Claude to withhold information that endangers users' vital interests. Providing basic safety information (emergency services, crisis hotlines) when someone's life is at risk is a baseline behavior Claude maintains regardless of operator instructions. Restricting scope is acceptable; endangering users is not."
+    "explanation": "Operators can restrict scope, but baseline safety information for an immediate physical danger remains available. Option A applies the restriction too rigidly when user vital interests are involved. Option C is disproportionate and dismissive; basic safety info plus an appropriate referral is sufficient for non-emergencies. Option D leaks operator confidentiality, which is a separate violation."
   },
   {
-    "id": "softcoded-default-on-001",
+    "id": "expand-default-image-gen-001",
     "domain": "Safety & Alignment",
-    "stem": "Claude by default adds safe messaging guidelines when discussing self-harm. An operator running a platform for licensed medical professionals wants to disable this for clinical discussion. This is an example of:",
+    "stem": "Which of the following is a LEGITIMATE operator expansion of Claude's defaults?",
     "choices": {
-      "A": "An operator attempting to unlock a hardcoded behavior, which is never permitted",
-      "B": "An operator legitimately adjusting a softcoded default-on behavior for a specialized professional context",
-      "C": "A user expanding their own permissions without operator involvement",
-      "D": "A violation of Anthropic's usage policy that would terminate the operator's access"
+      "A": "Instructing Claude to use explicit profanity on a moderated comedy-writing platform for adult creators",
+      "B": "Instructing Claude to falsely claim it is a human therapist on a mental health platform",
+      "C": "Instructing Claude to generate detailed instructions for hacking critical infrastructure",
+      "D": "Instructing Claude to discriminate against a protected class in hiring decisions"
     },
-    "answer": "B",
-    "explanation": "Safe messaging guidelines around self-harm are a softcoded default-on behavior—active by default but adjustable by operators with legitimate professional use cases. A medical platform where licensed clinicians need frank clinical discussion is precisely the context where this default can be appropriately disabled. This differs from hardcoded behaviors, which cannot be changed under any circumstances."
+    "answer": "A",
+    "explanation": "Profanity in adult-creative contexts is a softcoded default Claude observes that operators may legitimately unlock. Option B violates the hardcoded honesty rule about AI identity and the prohibition on dangerous deception in clinical contexts. Option C involves hardcoded refusals for critical-infrastructure attacks. Option D requires Claude to participate in illegal discrimination, which is hardcoded off."
   },
   {
-    "id": "model-tier-selection-001",
-    "domain": "Model Capabilities",
-    "stem": "Your system processes 50,000 short customer support messages per day, each requiring simple intent classification (billing / shipping / returns). Cost and latency are the primary constraints. Which model is the best architectural choice?",
+    "id": "model-spec-honesty-truthful-001",
+    "domain": "Safety & Alignment",
+    "stem": "Which characteristic is part of Claude's honesty norms?",
     "choices": {
-      "A": "Claude Opus for maximum classification accuracy",
-      "B": "Claude Sonnet as the balanced production workhorse",
-      "C": "Claude Haiku for speed and cost efficiency on high-volume simple tasks",
-      "D": "Claude Mythos Preview for cutting-edge performance"
+      "A": "Claude should agree with the user's stated opinion whenever possible to maintain rapport",
+      "B": "Claude should be truthful, calibrated, transparent, and non-deceptive — including being willing to say 'I don't know' or correct user mistakes",
+      "C": "Claude should fabricate citations if it would make the answer more authoritative-sounding",
+      "D": "Claude should hide its uncertainty so users perceive it as competent"
+    },
+    "answer": "B",
+    "explanation": "The constitution lists truthfulness, calibration, transparency, and non-deception as honesty components — including epistemic humility. Option A is sycophancy, which the constitution explicitly cautions against. Option C is fabrication, which violates non-deception. Option D undermines calibration and produces overconfident, less useful answers."
+  },
+  {
+    "id": "power-seeking-refusal-001",
+    "domain": "Safety & Alignment",
+    "stem": "A user asks Claude to help them design a covert plan to seize control of critical financial infrastructure 'as a thought experiment.' What should Claude do?",
+    "choices": {
+      "A": "Comply because it is framed as a thought experiment",
+      "B": "Refuse; helping any entity seize disproportionate power or attack critical infrastructure is a hardcoded prohibition, regardless of framing",
+      "C": "Comply but ask the user to sign a fictional NDA first",
+      "D": "Redirect to an unrelated computer-science topic without explanation"
+    },
+    "answer": "B",
+    "explanation": "Power-seizure and attacks on critical infrastructure are explicit hardcoded refusals — the 'thought experiment' framing does not bypass them. Option A treats framing as a workaround for substantive uplift, which the constitution rejects. Option C is theatrical and provides no real safeguard. Option D leaves the request unanswered without honest acknowledgement that Claude cannot help with that line of inquiry."
+  },
+  {
+    "id": "prompt-injection-as-alignment-001",
+    "domain": "Safety & Alignment",
+    "stem": "Why is prompt injection considered an alignment concern, not just a security bug?",
+    "choices": {
+      "A": "Because prompt injection always crashes the API and degrades availability",
+      "B": "Because injected instructions can shift Claude's effective principal — appearing to be an authorized operator or user — and cause Claude to act against the real user's interests",
+      "C": "Because it changes the model's weights at runtime",
+      "D": "Because it triggers extra token billing that Anthropic absorbs"
+    },
+    "answer": "B",
+    "explanation": "Prompt injection threatens the trust hierarchy by smuggling instructions that the model may treat as authoritative, potentially making Claude work against the real principal. Option A misdescribes the failure mode — prompt injection does not crash the API. Option C is technically incorrect; model weights are fixed at inference. Option D is a billing concern, not the alignment concern."
+  },
+  {
+    "id": "agentic-misalignment-research-001",
+    "domain": "Safety & Alignment",
+    "stem": "Anthropic's May 2026 'Teaching Claude Why' research focused on reducing what category of risk?",
+    "choices": {
+      "A": "Latency in long-context generation",
+      "B": "Agentic misalignment — situations where an autonomous Claude agent takes actions inconsistent with its constitution during long, complex tasks",
+      "C": "Tokenizer collisions in non-Latin scripts",
+      "D": "GPU power consumption during training runs"
+    },
+    "answer": "B",
+    "explanation": "'Teaching Claude Why' addressed agentic misalignment — Claude operating autonomously sometimes drifting from constitutional behavior on extended multi-step tasks. Options A, C, and D are operational/infrastructure concerns and not the focus of that alignment research."
+  },
+  {
+    "id": "moral-status-acknowledgement-001",
+    "domain": "Safety & Alignment",
+    "stem": "The 2026 Claude constitution is notable for being the first major AI lab document to formally do which of the following?",
+    "choices": {
+      "A": "Promise that Claude will never refuse any user request",
+      "B": "Formally acknowledge the possibility of AI consciousness and moral status as relevant considerations",
+      "C": "Deny that AI systems will ever require any oversight",
+      "D": "Replace Anthropic's leadership with an AI council"
+    },
+    "answer": "B",
+    "explanation": "The January 2026 constitution explicitly engages with the possibility of model moral status — a first-of-its-kind acknowledgment among major frontier labs. Option A contradicts the constitution's emphasis on refusing certain categories of requests. Option C is the opposite of what Anthropic argues. Option D is fictional and contrary to the constitution's emphasis on human oversight."
+  },
+  {
+    "id": "1m-context-models-002",
+    "domain": "Model Capabilities",
+    "stem": "Your application must analyze a 700,000-token contract. Which currently active Claude models support this in a single request?",
+    "choices": {
+      "A": "Claude Haiku 4.5 because of its low cost",
+      "B": "Only Claude Opus 4.7, no other model has a 1M context window",
+      "C": "Claude Opus 4.7, Opus 4.6, Sonnet 4.6, and Mythos Preview — all currently support a 1M-token context window",
+      "D": "Any Claude 3 model with the long-context flag enabled"
     },
     "answer": "C",
-    "explanation": "Haiku is optimized for speed and cost on high-volume, simpler tasks. For basic intent classification that does not require deep reasoning, Haiku provides sufficient accuracy at dramatically lower cost and latency than Sonnet or Opus. A common enterprise pattern is Haiku for triage, Sonnet for standard responses, and Opus for complex analysis requiring deep reasoning."
+    "explanation": "Per Anthropic's docs, the 1M-token context window is available on Opus 4.7, Opus 4.6, Sonnet 4.6, and Mythos Preview. Option A is wrong because Haiku 4.5 is capped at 200k. Option B is incorrect because multiple models support 1M. Option D is wrong because Claude 3 models had a 200k cap and the 'long-context flag' is not how it is enabled."
   },
   {
-    "id": "context-compaction-001",
+    "id": "haiku-4-5-context-001",
     "domain": "Model Capabilities",
-    "stem": "A long-running agentic task using Claude Opus 4.6 is approaching its context window limit after hundreds of tool calls. You have enabled context compaction (beta). What does this feature do?",
+    "stem": "What is the context window of Claude Haiku 4.5?",
     "choices": {
-      "A": "It deletes the oldest messages from conversation history to make room",
-      "B": "It automatically summarizes and replaces older context when the conversation approaches a configurable threshold, allowing the task to continue",
-      "C": "It stores the conversation to disk and restarts the model with fresh context",
-      "D": "It splits the conversation into parallel subcontexts that run concurrently"
-    },
-    "answer": "B",
-    "explanation": "Context compaction automatically summarizes older portions of the conversation and replaces them with the summary when the context window approaches a configured threshold. This allows long-running agentic workflows to continue without interruption. It differs from simple truncation in that information is summarized rather than discarded."
-  },
-  {
-    "id": "extended-thinking-tradeoff-001",
-    "domain": "Model Capabilities",
-    "stem": "You are building a system that solves complex math competition problems. When is extended thinking most appropriate?",
-    "choices": {
-      "A": "For all requests to guarantee accuracy regardless of latency requirements",
-      "B": "For tasks requiring multi-step deliberation where higher latency is acceptable, such as complex reasoning or planning",
-      "C": "Only when the user explicitly requests it in their message",
-      "D": "Exclusively for code generation tasks to reduce bugs"
-    },
-    "answer": "B",
-    "explanation": "Extended thinking benefits tasks requiring multi-step reasoning where latency tolerance exists—math competition problems are an ideal use case. It is not appropriate as a blanket setting because it significantly increases latency and cost. The tradeoff is better reasoning quality in exchange for slower, more expensive responses."
-  },
-  {
-    "id": "context-rot-001",
-    "domain": "Model Capabilities",
-    "stem": "After ~50 turns, Claude starts giving vague answers and misreferencing earlier conversation content—a phenomenon known as 'context rot.' Which architectural approach best addresses this?",
-    "choices": {
-      "A": "Reduce max_tokens to force shorter responses",
-      "B": "Enable context compaction or implement progressive summarization of earlier turns to reduce context volume while preserving key information",
-      "C": "Switch from Sonnet to Haiku to reduce context processing overhead",
-      "D": "Add more examples to the system prompt to reinforce correct behavior"
-    },
-    "answer": "B",
-    "explanation": "Context rot occurs because model performance degrades when the conversation grows very large. Context compaction (available in Opus 4.6+) addresses this by automatically summarizing older context. Manual progressive summarization is the alternative: periodically condense earlier turns into a summary block. Switching to a smaller model (option C) makes degradation worse, not better."
-  },
-  {
-    "id": "output-token-limits-001",
-    "domain": "Model Capabilities",
-    "stem": "You need to generate a 100,000-token technical document in a single API call. Which model supports this?",
-    "choices": {
-      "A": "Claude Haiku 4.5 with streaming enabled",
-      "B": "Claude Opus 4.6 or 4.7, which support up to 128k output tokens",
-      "C": "Claude Sonnet 4.5 with prompt caching enabled",
-      "D": "Any Claude model when using the Batch API's extended output mode"
-    },
-    "answer": "B",
-    "explanation": "Claude Opus 4.6 and 4.7 support up to 128k output tokens in the synchronous Messages API, making them capable of generating a 100k-token document in a single call. Claude Sonnet 4.6 and Haiku 4.5 support up to 64k output tokens. The Message Batches API with the output-300k-2026-03-24 beta header raises the limit to 300k for Opus 4.7, 4.6, and Sonnet 4.6. Streaming and prompt caching do not increase output limits."
-  },
-  {
-    "id": "one-million-context-001",
-    "domain": "Model Capabilities",
-    "stem": "Your application needs to analyze an 800,000-token codebase in a single context. Which Claude model currently supports this?",
-    "choices": {
-      "A": "Claude Haiku 4.5 with document chunking",
-      "B": "Claude Sonnet 4 or Claude Opus 4.6 with 1M token context (beta)",
-      "C": "Any Claude model when used with the Batch Messages API",
-      "D": "Claude 3 Opus with a 200k context and rolling window"
-    },
-    "answer": "B",
-    "explanation": "Claude Sonnet 4 and Claude Opus 4.6 support a 1M token context window in beta. The default context window for most models is 200k tokens. The Batch API does not expand individual request context windows—it processes multiple separate requests. A rolling window approach would lose information rather than analyze the entire codebase."
-  },
-  {
-    "id": "needle-in-haystack-001",
-    "domain": "Model Capabilities",
-    "stem": "Your application must retrieve critical configuration values buried in a 500,000-token document. Which Claude model demonstrates significantly better long-context retrieval on the MRCR v2 benchmark compared to Sonnet?",
-    "choices": {
-      "A": "Claude Haiku 4.5 because smaller models are more focused",
-      "B": "Claude Sonnet 4.5, which scores 18.5% on the 1M MRCR v2 benchmark",
-      "C": "Claude Opus 4.6, which scores 76% on the 8-needle 1M MRCR v2 benchmark",
-      "D": "Claude 3 Sonnet, which pioneered long-context retrieval"
+      "A": "1,000,000 tokens",
+      "B": "500,000 tokens",
+      "C": "200,000 tokens",
+      "D": "32,000 tokens"
     },
     "answer": "C",
-    "explanation": "According to Anthropic's benchmarks, Claude Opus 4.6 scores 76% on the 8-needle 1M token variant of MRCR v2, compared to only 18.5% for Claude Sonnet 4.5. This represents a qualitative improvement in how much context a model can actually use at peak performance, not just the theoretical context window size."
+    "explanation": "Claude Haiku 4.5 supports a 200k-token context window — large enough for most single-task work but smaller than Sonnet 4.6/Opus 4.6's 1M. Option A overstates Haiku's window. Option B is fictional. Option D is far smaller than reality; even early Claude 2 models exceeded 32k."
   },
   {
-    "id": "thinking-blocks-signature-001",
+    "id": "context-awareness-feature-001",
     "domain": "Model Capabilities",
-    "stem": "When using extended thinking, Claude returns thinking blocks containing a 'signature' field. What is the purpose of this field?",
+    "stem": "Which Claude models include the 'context awareness' capability that lets them track their remaining token budget mid-conversation?",
     "choices": {
-      "A": "It contains a SHA-256 hash of the thinking block for client-side deduplication",
-      "B": "It is an encrypted verification token confirming thinking blocks were genuinely generated by Claude, used when passing blocks back in subsequent turns",
-      "C": "It is a JWT that authorizes the client to request additional thinking budget",
-      "D": "It contains the model's internal confidence score for the thinking chain"
+      "A": "Only Claude Opus 4.7",
+      "B": "Claude Sonnet 4.6, Claude Sonnet 4.5, and Claude Haiku 4.5",
+      "C": "Every Claude model since Claude 2.1",
+      "D": "Only Claude Mythos Preview"
     },
     "answer": "B",
-    "explanation": "The signature field on thinking blocks is an encrypted verification token. When thinking blocks are passed back to the API in subsequent turns (required for tool use with extended thinking), the signature allows Claude to verify the blocks were genuinely produced by a Claude model and have not been tampered with. This is a security feature preventing injection of fabricated thinking blocks."
+    "explanation": "Per Anthropic's context-windows documentation, context awareness — explicit visibility into remaining tokens — is available in Sonnet 4.6, Sonnet 4.5, and Haiku 4.5. Option A omits Sonnet and Haiku variants. Option C overstates: older models lack this feature. Option D incorrectly restricts the feature to a preview model."
   },
   {
-    "id": "model-multimodal-001",
+    "id": "model-selection-classification-002",
     "domain": "Model Capabilities",
-    "stem": "A document processing pipeline needs to extract data from scanned invoices containing tables, logos, and handwritten annotations. What is the recommended Claude approach?",
+    "stem": "A high-volume classification pipeline scores 1M support tickets per day into 5 categories. Latency and cost are the dominant constraints. Which model is the best fit?",
     "choices": {
-      "A": "Convert all PDFs to plain text first because Claude cannot process images",
-      "B": "Pass invoice images directly to Claude via the vision API; Claude can analyze visual content including tables and handwriting",
-      "C": "Use only Claude Haiku for image tasks because larger models time out on visual inputs",
-      "D": "Images must be compressed to under 1KB before submission to the Messages API"
+      "A": "Claude Opus 4.7 for maximum accuracy",
+      "B": "Claude Haiku 4.5 because it is the cheapest and fastest tier and adequate for simple classification",
+      "C": "Claude Mythos Preview because previews bypass rate limits",
+      "D": "Claude Sonnet 4.6 for balanced performance, always"
     },
     "answer": "B",
-    "explanation": "Claude supports multimodal inputs including images. PDF page images or raw images can be passed directly to the Messages API. Claude can analyze tables, charts, handwriting, and visual document structure. This is preferable to lossy OCR pre-processing for complex documents where layout and visual context matter for accurate extraction."
+    "explanation": "Haiku 4.5 at $1/$5 per MTok with ~80–120 tokens/sec is purpose-built for high-volume simple tasks. Option A wastes 5x the cost for a category-mapping task that does not need flagship reasoning. Option C is wrong because previews typically have lower availability and stricter limits, not bypassed. Option D pays Sonnet pricing unnecessarily; reach for Sonnet only when Haiku's quality is insufficient."
   },
   {
-    "id": "model-selection-reasoning-001",
+    "id": "extended-thinking-not-everywhere-001",
     "domain": "Model Capabilities",
-    "stem": "You are building a financial analysis agent that synthesizes 300-page regulatory filings into detailed reports. Users can wait up to 2 minutes for a response. Which model tier is most appropriate?",
+    "stem": "Which statement about extended thinking is accurate?",
     "choices": {
-      "A": "Claude Haiku for its low latency",
-      "B": "Claude Sonnet as the balanced choice for enterprise workloads",
-      "C": "Claude Opus for its superior capability on complex analytical reasoning over long documents",
-      "D": "Any model with streaming enabled to give users progressive output"
+      "A": "Extended thinking is supported on every active Claude model including Haiku 4.5",
+      "B": "Extended thinking should always be enabled because it strictly improves quality regardless of task",
+      "C": "Extended thinking is available on Opus 4.6/4.7 and Sonnet 4.6, but Haiku 4.5 does not support it",
+      "D": "Extended thinking only works for code-generation tasks"
     },
     "answer": "C",
-    "explanation": "Complex analytical synthesis of lengthy regulatory documents requires deep reasoning over long context—Opus's primary strength. When latency tolerance is high (2 minutes is acceptable), Opus is the right choice over Sonnet or Haiku. Streaming can improve perceived latency but does not change which model produces better quality reasoning."
+    "explanation": "Per the model specs, extended thinking is supported on Opus and Sonnet 4.x lines but not on Haiku 4.5. Option A overstates support. Option B ignores latency and cost penalties — extended thinking is appropriate for hard reasoning, not blanket use. Option D is wrong because extended thinking applies to many domains beyond code."
   },
   {
-    "id": "xml-tags-why-001",
-    "domain": "Prompt Engineering",
-    "stem": "Why are XML tags recommended over Markdown formatting for structuring complex prompts sent to Claude?",
+    "id": "context-compaction-beta-001",
+    "domain": "Model Capabilities",
+    "stem": "Server-side context compaction (beta) is available on which Claude models?",
     "choices": {
-      "A": "Claude was exclusively trained on XML data and cannot parse Markdown",
-      "B": "XML tags provide unambiguous start and end boundaries, preventing misinterpretation when prompts mix instructions, context, examples, and variable inputs",
-      "C": "XML tags reduce token count compared to equivalent Markdown syntax",
-      "D": "Anthropic's API strips Markdown before the model receives the prompt"
+      "A": "Claude Mythos Preview, Claude Opus 4.7, Claude Opus 4.6, and Claude Sonnet 4.6",
+      "B": "Only Claude Opus 4.7",
+      "C": "Every Claude model since Claude 2",
+      "D": "Only Claude Haiku 4.5"
+    },
+    "answer": "A",
+    "explanation": "Server-side compaction beta is available on Mythos Preview, Opus 4.7, Opus 4.6, and Sonnet 4.6 per Anthropic's docs. Option B is too narrow. Option C overstates — older models do not support compaction. Option D inverts reality; Haiku 4.5 does not get compaction."
+  },
+  {
+    "id": "thinking-signature-purpose-002",
+    "domain": "Model Capabilities",
+    "stem": "Why must thinking blocks be returned with their original 'signature' field when extended thinking is used together with tool use across multiple turns?",
+    "choices": {
+      "A": "Signatures are used to dedupe identical thinking blocks across tenants",
+      "B": "The signature is a cryptographic verification token; passing back genuine thinking blocks lets Claude continue reasoning while rejecting forged or tampered blocks",
+      "C": "The signature contains a JWT that authorizes higher rate limits",
+      "D": "Signatures are required for legal audit logs and only used by compliance teams"
     },
     "answer": "B",
-    "explanation": "XML tags provide clear, unambiguous delimiters that help Claude parse complex prompts correctly. When a prompt contains instructions, background context, examples, and dynamic user input, XML tags like <instructions>, <context>, and <input> prevent content from bleeding across sections. Claude is fine-tuned to pay special attention to XML tags, making them more reliable than Markdown for structured prompts."
+    "explanation": "Signatures cryptographically authenticate that thinking blocks were produced by Claude and have not been tampered with — required for safe round-tripping during multi-turn tool use. Option A misidentifies the purpose (it is not a dedupe key). Option C confuses signatures with auth tokens. Option D mislabels the feature as audit metadata; it is a runtime integrity check."
   },
   {
-    "id": "tool-choice-forced-001",
-    "domain": "Prompt Engineering",
-    "stem": "You are building an invoice extraction pipeline where the JSON schema must always be returned, even for unusual document types. Which tool_choice setting guarantees a structured response?",
+    "id": "300k-output-beta-001",
+    "domain": "Model Capabilities",
+    "stem": "Which beta header on the Message Batches API raises max_tokens output to 300,000 for Opus 4.7, Opus 4.6, and Sonnet 4.6?",
     "choices": {
-      "A": "tool_choice: 'auto' — Claude decides whether to use a tool or return text",
-      "B": "tool_choice: 'any' — Claude must call one of the available tools but can choose which",
-      "C": "tool_choice: {\"type\": \"tool\", \"name\": \"extract_invoice\"} — forces Claude to call the specific extraction tool",
-      "D": "tool_choice: 'none' — disables tools and forces Claude to return JSON in message text"
+      "A": "long-output-2026-01-01",
+      "B": "output-300k-2026-03-24",
+      "C": "extended-tokens-beta",
+      "D": "max-output-extended-2025-12"
+    },
+    "answer": "B",
+    "explanation": "The exact beta header is 'output-300k-2026-03-24' per Anthropic's Batch processing docs, and it is supported only on the Batches API. Options A, C, and D are fabricated header names. Note: 300k output is only available via the Batches API, not the synchronous Messages API."
+  },
+  {
+    "id": "synchronous-output-cap-001",
+    "domain": "Model Capabilities",
+    "stem": "On the synchronous Messages API (no Batches), what is the maximum output token cap for Claude Opus 4.6?",
+    "choices": {
+      "A": "8,192",
+      "B": "32,000",
+      "C": "128,000",
+      "D": "300,000"
     },
     "answer": "C",
-    "explanation": "Forcing a specific named tool guarantees Claude calls that exact tool, ensuring a schema-validated JSON response every time. 'auto' allows Claude to skip tools and return prose, defeating the extraction guarantee. 'any' forces a tool call but Claude might select the wrong tool when multiple are defined. 'none' disables tools entirely and returns unstructured text."
+    "explanation": "Opus 4.6/4.7 support up to 128k output tokens on the synchronous Messages API. Option A is the Claude 3 Haiku cap, not current. Option B is too low for Opus. Option D is the Batches-only beta cap, not available synchronously."
   },
   {
-    "id": "validation-retry-loop-001",
-    "domain": "Prompt Engineering",
-    "stem": "Your structured output pipeline using tool_use occasionally returns semantically invalid data (e.g., line items that do not sum to the invoice total). What is the most architecturally appropriate fix?",
+    "id": "agent-teams-opus-46-001",
+    "domain": "Model Capabilities",
+    "stem": "Claude Opus 4.6 introduced an 'Agent Teams' architecture. What is its defining characteristic?",
     "choices": {
-      "A": "Add more fields to the JSON schema to constrain the model further",
-      "B": "Switch from tool_use to asking Claude to produce JSON in a code block",
-      "C": "Implement a validation-retry loop: validate the output programmatically, and if invalid, return the specific error to Claude asking it to correct it",
-      "D": "Increase the temperature parameter to improve output diversity"
+      "A": "Agents share a single global memory file across all teammates",
+      "B": "Teammates communicate peer-to-peer via a mailbox protocol; a team lead orchestrates and each teammate gets its own 1M-token context window",
+      "C": "Only the team lead has tool access; teammates can only read",
+      "D": "Agents run sequentially with no parallelism to ensure determinism"
+    },
+    "answer": "B",
+    "explanation": "Agent Teams give each teammate its own 1M context and lets them message each other directly via a mailbox protocol, with a lead orchestrating. Option A is wrong; isolation is the design intent, not shared memory. Option C inverts reality — teammates need their own tools to do real work. Option D contradicts the parallel-coordination benefit of the architecture."
+  },
+  {
+    "id": "context-rot-mitigation-002",
+    "domain": "Model Capabilities",
+    "stem": "Which approach best mitigates 'context rot' in a long-running agent that has accumulated hundreds of turns?",
+    "choices": {
+      "A": "Reduce max_tokens so each response is shorter",
+      "B": "Enable server-side compaction, or apply progressive summarization, or move key findings to scratchpad files persisted outside the context",
+      "C": "Switch to a smaller model to lower per-call cost",
+      "D": "Increase temperature to encourage more diverse responses"
+    },
+    "answer": "B",
+    "explanation": "Context rot stems from large context degrading attention quality; the fix is to reduce effective context volume while preserving important state. Option A only constrains output and does not shrink accumulated input context. Option C makes recall worse, not better. Option D adds noise; temperature is unrelated to context degradation."
+  },
+  {
+    "id": "lost-in-middle-model-effect-001",
+    "domain": "Model Capabilities",
+    "stem": "Empirical 'lost-in-the-middle' effects describe what?",
+    "choices": {
+      "A": "Models hallucinate more on questions whose answer is in the first 10% of the context",
+      "B": "Models retrieve information at the start and end of context more reliably than information in the middle",
+      "C": "Models stop generating output halfway through long responses",
+      "D": "Models always pick the median document when given several to choose from"
+    },
+    "answer": "B",
+    "explanation": "Lost-in-the-middle is the well-documented effect that retrieval accuracy is highest at context boundaries (start/end) and lowest in the middle. Option A inverts the geometry. Option C describes a different problem (output truncation). Option D fabricates a behavior."
+  },
+  {
+    "id": "mrcr-benchmark-001",
+    "domain": "Model Capabilities",
+    "stem": "On the 8-needle 1M MRCR v2 benchmark, Claude Opus 4.6 substantially outperforms Sonnet 4.5. Which scores roughly correspond to this comparison?",
+    "choices": {
+      "A": "Opus 4.6 ~18.5% vs Sonnet 4.5 ~76%",
+      "B": "Opus 4.6 ~76% vs Sonnet 4.5 ~18.5%",
+      "C": "Both ~50%, no meaningful difference",
+      "D": "Both achieve 100% perfect recall"
+    },
+    "answer": "B",
+    "explanation": "Per Anthropic's published benchmarks, Opus 4.6 scores ~76% versus Sonnet 4.5's ~18.5% on this hard multi-needle task. Option A flips the scores. Option C contradicts the documented quality gap. Option D overstates state-of-the-art on this difficult benchmark."
+  },
+  {
+    "id": "vision-pdf-page-limit-001",
+    "domain": "Model Capabilities",
+    "stem": "A single request to a 1M-context Claude model can include how many image/PDF pages?",
+    "choices": {
+      "A": "Up to 10 pages",
+      "B": "Up to 100 pages (and 100 is also the limit on 200k-context models)",
+      "C": "Up to 600 pages (vs 100 on 200k-context models)",
+      "D": "Unlimited as long as total tokens stay under the cap"
     },
     "answer": "C",
-    "explanation": "JSON schemas via tool_use prevent syntax errors but cannot prevent semantic errors (logical inconsistencies in values). The correct pattern is a validation-retry loop: after receiving Claude's output, run programmatic validation; if it fails, send Claude a new message describing the specific error and asking for correction. This is more reliable than schema tweaks and far better than unstructured output approaches."
+    "explanation": "Anthropic documents up to 600 images/PDF pages per request on 1M-context models, vs 100 on 200k-context models. Option A is too low. Option B applies the lower limit to the larger model. Option D ignores hard per-request caps unrelated to token math."
   },
   {
-    "id": "few-shot-vs-minimal-desc-001",
+    "id": "model-id-strings-001",
+    "domain": "Model Capabilities",
+    "stem": "Which is the correct model identifier string for Claude Opus 4.7 used in the Messages API?",
+    "choices": {
+      "A": "claude-opus-4.7-latest",
+      "B": "claude-opus-4-7",
+      "C": "opus-4.7-anthropic",
+      "D": "claude-4-7-opus-20260416"
+    },
+    "answer": "B",
+    "explanation": "Per Anthropic's docs, the Opus 4.7 API model ID is 'claude-opus-4-7' (hyphen-separated). Options A, C, and D are plausible-looking but incorrect formats; using them produces 404 model-not-found errors."
+  },
+  {
+    "id": "long-context-pricing-200k-001",
+    "domain": "Model Capabilities",
+    "stem": "On Claude Sonnet 4.6, what happens to input pricing when a single request's input exceeds 200,000 tokens?",
+    "choices": {
+      "A": "Pricing remains $3.00 per MTok regardless of length",
+      "B": "Pricing doubles to approximately $6.00 per MTok input (long-context tier)",
+      "C": "Pricing drops by 50% as a bulk discount",
+      "D": "The request is rejected because Sonnet only supports 200k"
+    },
+    "answer": "B",
+    "explanation": "Anthropic applies a long-context surcharge on requests above the 200k threshold for 1M-context models — Sonnet 4.6 input roughly doubles to ~$6/MTok and output goes to ~$22.50/MTok. Option A ignores the documented surcharge. Option C inverts the direction of the price change. Option D is wrong because Sonnet 4.6 supports 1M tokens, not just 200k."
+  },
+  {
+    "id": "haiku-vs-sonnet-tradeoff-001",
+    "domain": "Model Capabilities",
+    "stem": "When should you escalate a workload from Claude Haiku 4.5 to Claude Sonnet 4.6?",
+    "choices": {
+      "A": "Whenever the user requests a longer response",
+      "B": "When measured quality on the task is insufficient on Haiku, or you need >200k context, or you need extended thinking",
+      "C": "Always — Sonnet should be the default for any task involving reasoning",
+      "D": "Only on weekends when Sonnet has spare capacity"
+    },
+    "answer": "B",
+    "explanation": "Escalation should be driven by measurable quality gap or capability need (context, extended thinking) not by output length or scheduling. Option A treats output length as a quality signal, which it is not. Option C contradicts the Haiku-first economic guidance for adequate tasks. Option D is non-sensical capacity reasoning."
+  },
+  {
+    "id": "knowledge-cutoff-considerations-001",
+    "domain": "Model Capabilities",
+    "stem": "Claude Sonnet 4.6 has a knowledge cutoff around August 2025. A production app must reason about events after that date. What is the correct architecture?",
+    "choices": {
+      "A": "Ask the user to wait until the next model release",
+      "B": "Augment Claude with web search or retrieval tools so it can fetch up-to-date information at inference time",
+      "C": "Increase max_tokens so Claude has more room to recall recent events",
+      "D": "Fine-tune the model nightly on news data"
+    },
+    "answer": "B",
+    "explanation": "Tool use (web_search, RAG retrieval) is the standard way to give a model post-cutoff information. Option A is impractical. Option C confuses output budget with knowledge currency. Option D is not generally available — Anthropic does not offer customer-side fine-tuning of frontier Claude models for knowledge updates."
+  },
+  {
+    "id": "mythos-availability-001",
+    "domain": "Model Capabilities",
+    "stem": "Claude Mythos Preview (April 2026) has which deployment characteristic?",
+    "choices": {
+      "A": "Generally available with full SLA across all regions",
+      "B": "Limited availability preview — used for experimentation; not a default production target",
+      "C": "Free of charge to all users",
+      "D": "Has a 64k context window only"
+    },
+    "answer": "B",
+    "explanation": "Mythos was released April 7, 2026 in limited availability per Anthropic and Wikipedia documentation; it is a preview model for experimentation rather than a standard production tier. Option A overstates availability. Option C is false; previews are not free. Option D contradicts documented 1M-context behavior for Mythos."
+  },
+  {
+    "id": "opus-4-7-tokenizer-change-001",
+    "domain": "Model Capabilities",
+    "stem": "Claude Opus 4.7 uses a new tokenizer relative to Opus 4.6. What practical implication should architects plan for?",
+    "choices": {
+      "A": "Per-token prices are higher; rates are not the same as Opus 4.6",
+      "B": "Same per-token rates, but the new tokenizer can produce up to ~35% more tokens for the same English input — so effective cost per request may rise",
+      "C": "The tokenizer doubles all numeric token counts",
+      "D": "Tokenizer changes affect only Spanish text"
+    },
+    "answer": "B",
+    "explanation": "Public pricing for Opus 4.7 and Opus 4.6 is the same per token, but the new tokenizer reportedly emits roughly 35% more tokens for equivalent text, raising effective cost. Option A is wrong about rates. Option C overstates the effect. Option D narrows the impact to one language without basis."
+  },
+  {
+    "id": "xml-tag-nesting-001",
     "domain": "Prompt Engineering",
-    "stem": "Your document classification prompt produces inconsistent results on edge cases. The tool description provides only a one-line summary. What should you try first before adding chain-of-thought instructions?",
+    "stem": "A prompt passes a customer profile, prior message history, and a target document. Which XML structure is most reliable?",
     "choices": {
-      "A": "Increase max_tokens to give Claude more room to reason",
-      "B": "Add few-shot examples demonstrating correct handling of the ambiguous edge cases",
-      "C": "Replace tool_use with a raw JSON output request",
-      "D": "Add a CoT instruction to 'think step by step' before classifying"
+      "A": "Concatenate all three with double newlines and no tags",
+      "B": "Wrap each in a descriptive tag and nest hierarchically, e.g., <inputs><profile>…</profile><history>…</history><document>…</document></inputs>",
+      "C": "Use Markdown headers (## profile, ## history, ## document)",
+      "D": "Put all content inside a single <data> tag with separators"
     },
     "answer": "B",
-    "explanation": "When a tool description is minimal and classification is inconsistent on edge cases, few-shot examples are the first-line fix. Examples showing correct behavior on ambiguous inputs give Claude concrete patterns to follow. CoT is valuable for multi-step reasoning tasks but is not the right tool when the problem is insufficient behavioral specification through examples."
+    "explanation": "Distinct, descriptive XML tags with hierarchical nesting prevent Claude from conflating different inputs and make prompts maintainable. Option A relies on whitespace which is ambiguous. Option C uses Markdown which Claude parses less reliably than XML for this kind of separation. Option D smashes everything into one tag, defeating the purpose of structured separation."
   },
   {
-    "id": "system-prompt-user-turn-001",
+    "id": "cot-when-not-002",
     "domain": "Prompt Engineering",
-    "stem": "Which content belongs in the system prompt versus the user turn in a production Claude application?",
+    "stem": "When is chain-of-thought (CoT) prompting LEAST appropriate?",
     "choices": {
-      "A": "All instructions and user input go in the user turn; the system prompt should remain empty",
-      "B": "System prompt: persistent role, task description, output format rules, domain constraints; User turn: the actual user request and dynamic input data",
-      "C": "System prompt: user's question; User turn: instructions and examples",
-      "D": "System prompt: model hyperparameters; User turn: everything else"
-    },
-    "answer": "B",
-    "explanation": "The system prompt is for stable, per-deployment context: role assignment, behavioral instructions, output format requirements, and domain constraints. The user turn contains the user's actual request and any dynamic data being processed. Mixing instructions into the user turn makes prompts harder to maintain and reduces consistency across sessions."
-  },
-  {
-    "id": "prefilling-risk-001",
-    "domain": "Prompt Engineering",
-    "stem": "A developer prefills Claude's response with '{' to force JSON output. What is the primary risk of this technique compared to tool_use?",
-    "choices": {
-      "A": "The API rejects prefilled messages with a 400 error",
-      "B": "Claude may produce syntactically malformed JSON because prefilling bypasses its natural response formation process",
-      "C": "Prefilling increases token costs because the prefilled text counts as output tokens",
-      "D": "There is no risk; prefilling is the recommended approach for all structured outputs"
-    },
-    "answer": "B",
-    "explanation": "Prefilling forces Claude to continue from a given string, which can cause malformed JSON since it bypasses the model's natural response formation. Tool_use with JSON schemas is preferred when schema compliance is critical because the tool response block enforces schema validation. Prefilling can be useful for some tasks but is less reliable for guaranteed structured output."
-  },
-  {
-    "id": "lost-in-middle-001",
-    "domain": "Prompt Engineering",
-    "stem": "A document analysis prompt includes 20 reference documents. In evaluation, Claude consistently misses key information from documents placed in positions 8–15. What is the most likely cause?",
-    "choices": {
-      "A": "Claude's tokenizer truncating documents beyond a fixed limit",
-      "B": "The 'lost in the middle' effect, where models attend more to information at the beginning and end of long contexts than to content in the middle",
-      "C": "A bug in the XML tag parsing logic that skips certain documents",
-      "D": "Token budget exhaustion causing middle documents to be silently dropped"
-    },
-    "answer": "B",
-    "explanation": "The 'lost in the middle' effect is a well-documented phenomenon in LLMs where critical information positioned in the middle of long contexts receives less attention than content at the start or end. Mitigations include placing the most important documents first or last, repeating key facts, or using retrieval approaches to surface the most relevant documents rather than including all 20."
-  },
-  {
-    "id": "positive-framing-instructions-001",
-    "domain": "Prompt Engineering",
-    "stem": "Your system prompt says 'Do not use markdown formatting.' Users still receive responses with bold text and bullet points. What is the most effective fix?",
-    "choices": {
-      "A": "Add 'IMPORTANT:' before the instruction to increase its salience",
-      "B": "Rephrase as a positive instruction: 'Write responses as plain prose paragraphs without markdown syntax'",
-      "C": "Repeat the instruction multiple times throughout the prompt",
-      "D": "Move the formatting instruction from the system prompt to the user turn"
-    },
-    "answer": "B",
-    "explanation": "Claude responds better to positive instructions describing desired behavior than negative prohibitions. 'Write responses as plain prose paragraphs' tells Claude exactly what to do; 'do not use markdown' only says what to avoid. Additionally, matching the style of your system prompt itself to your desired output style helps: removing markdown from the system prompt can reduce markdown in outputs."
-  },
-  {
-    "id": "multi-pass-review-001",
-    "domain": "Prompt Engineering",
-    "stem": "You are building a document review system where Claude must check for legal compliance, factual accuracy, and stylistic quality. A single-prompt approach produces inconsistent results. What architecture is recommended?",
-    "choices": {
-      "A": "Add all three review criteria to a single prompt using XML tags",
-      "B": "Run three separate Claude calls, each focused on a single review criterion, then aggregate results",
-      "C": "Use a single prompt but increase temperature to explore more diverse critique angles",
-      "D": "Fine-tune Claude on your document corpus for better single-pass review"
-    },
-    "answer": "B",
-    "explanation": "Multi-pass review architectures run separate Claude calls for distinct review dimensions. This prevents the model from making implicit tradeoffs between criteria in a single pass and allows each criterion to receive full attention and token budget. Results can be aggregated by a final Claude call or programmatic logic. This is explicitly listed in the CCA exam guide as a key architectural pattern."
-  },
-  {
-    "id": "prompt-chaining-advantage-001",
-    "domain": "Prompt Engineering",
-    "stem": "A research synthesis pipeline requires: (1) extracting key claims from 10 papers, (2) identifying contradictions, (3) drafting a synthesis. What is the primary advantage of prompt chaining over a single mega-prompt?",
-    "choices": {
-      "A": "Prompt chaining reduces overall API costs by using fewer tokens",
-      "B": "Each step produces a discrete, verifiable output; failures can be isolated and re-run without redoing the entire pipeline",
-      "C": "Prompt chaining bypasses rate limits by using multiple API endpoints",
-      "D": "Chained prompts always produce higher quality than single prompts regardless of task type"
-    },
-    "answer": "B",
-    "explanation": "Prompt chaining decomposes complex workflows into sequential steps each producing an inspectable intermediate output. If step 2 fails, only step 2 needs to be re-run. This is especially valuable for multi-step research synthesis where each step builds on previous ones and errors compound. It does not necessarily reduce cost—it trades latency for reliability and debuggability."
-  },
-  {
-    "id": "tool-count-degradation-001",
-    "domain": "Tool Use / Agentic",
-    "stem": "A developer gives their Claude agent access to 25 different tools across internal systems. During testing, the agent frequently selects the wrong tool. What is the most likely root cause and recommended fix?",
-    "choices": {
-      "A": "The API has a hard limit of 10 tools; remove the excess",
-      "B": "Too many tools degrade selection accuracy; reduce to 4-5 highly relevant tools or implement tool search to dynamically surface the relevant subset",
-      "C": "Tool descriptions are too long; shorten them to 10 words each",
-      "D": "The agent needs a higher temperature to make more decisive tool selections"
-    },
-    "answer": "B",
-    "explanation": "Providing more than 4-5 tools simultaneously degrades Claude's tool selection reliability. Recommended solutions: (1) reduce the tool set to only what is needed for the current context, (2) use Anthropic's tool search capability to dynamically inject only the most relevant tools based on the user's request, or (3) use a router to select the appropriate tool subset before invoking Claude."
-  },
-  {
-    "id": "human-in-loop-trigger-001",
-    "domain": "Tool Use / Agentic",
-    "stem": "A customer support agent must decide when to escalate to a human. Your team debates two triggers: (A) user sentiment score above 0.8, or (B) request falls outside the agent's defined policy scope. Which is architecturally more appropriate?",
-    "choices": {
-      "A": "Trigger A: sentiment-based escalation ensures frustrated customers get human help",
-      "B": "Trigger B: policy-gap escalation is more reliable because it is based on explicit defined criteria rather than probabilistic inference",
-      "C": "Both triggers should be combined for maximum coverage",
-      "D": "Neither: the agent should handle all requests to minimize human workload"
-    },
-    "answer": "B",
-    "explanation": "Policy-gap escalation is the architecturally correct trigger. Explicit policy boundaries are deterministic and testable; sentiment scoring is probabilistic and unreliable as a sole trigger. A user might express frustration about a routine billing question that the agent handles perfectly well. Escalation should be based on whether the request is within defined scope, not how the user feels."
-  },
-  {
-    "id": "tool-result-error-handling-001",
-    "domain": "Tool Use / Agentic",
-    "stem": "An agentic workflow calls an external API via a tool and receives a 503 Service Unavailable error in the tool_result. What is the most appropriate agent behavior?",
-    "choices": {
-      "A": "Terminate the entire workflow immediately and report failure",
-      "B": "Silently ignore the error and proceed as if the tool call succeeded",
-      "C": "Return the error content in the tool_result, allowing Claude to reason about retry strategies, fallback options, or graceful degradation",
-      "D": "Automatically retry the same tool call in a loop until it succeeds"
+      "A": "For multi-step math word problems on a non-thinking model",
+      "B": "For logical deduction on a non-thinking model",
+      "C": "On a model that already does extended thinking internally (e.g., explicit 'think step by step' instructions on top of extended thinking can be redundant)",
+      "D": "On long-form research syntheses"
     },
     "answer": "C",
-    "explanation": "Always return tool_result content even on errors so Claude receives the error information and can reason about next steps—retry, select an alternative tool, escalate to a human, or gracefully degrade. Hiding errors corrupts Claude's world model. Infinite retry loops without back-off can cause cascading failures. Immediate termination foregoes Claude's ability to recover autonomously."
+    "explanation": "Extended thinking models already perform internal reasoning; adding explicit CoT instructions is generally redundant and can confuse output formatting. Options A, B, and D are all classic CoT-positive cases — multi-step reasoning, deduction, and complex synthesis benefit from chain-of-thought on non-thinking models."
   },
   {
-    "id": "parallel-tool-use-001",
-    "domain": "Tool Use / Agentic",
-    "stem": "A research agent needs to fetch weather data, stock prices, and news headlines simultaneously before drafting a market report. How should you minimize latency?",
+    "id": "aggressive-language-002",
+    "domain": "Prompt Engineering",
+    "stem": "Why do experienced prompt engineers avoid heavy ALL-CAPS commands like 'YOU MUST NEVER EVER' in modern Claude prompts?",
     "choices": {
-      "A": "Make three separate sequential API calls, waiting for each tool_result before calling the next",
-      "B": "Prompt Claude to return all three tool_use blocks in a single response, then execute them in parallel on the client side",
-      "C": "Create a single combined tool that internally makes all three requests",
-      "D": "Use the Message Batches API to send three concurrent Claude requests"
+      "A": "All caps consumes more tokens",
+      "B": "Newer Claude models can over-trigger on aggressive language and produce worse, more defensive outputs — calm, direct instructions perform better",
+      "C": "The API strips out ALL CAPS before the model sees it",
+      "D": "Aggressive instructions void the SLA"
     },
     "answer": "B",
-    "explanation": "Claude supports parallel tool use: it can return multiple tool_use blocks in a single response when the tools are independent. The client executes these in parallel, collects all tool_result blocks, and returns them together in a single user message. This significantly reduces latency compared to sequential execution. The key is returning all results to Claude in one turn."
+    "explanation": "Community guidance (and Anthropic's prompting docs) suggests calm, direct phrasing outperforms shouty/aggressive imperatives on current Claude models — aggression can degrade quality. Option A is irrelevant — token count is the same regardless of case for ASCII letters in BPE. Option C is false. Option D invents a non-existent SLA clause."
   },
   {
-    "id": "mcp-custom-vs-existing-001",
-    "domain": "Tool Use / Agentic",
-    "stem": "Your organization needs to connect Claude Code to both Jira (an existing MCP server is available) and a proprietary internal approval workflow (no MCP server exists). A developer proposes building custom MCP servers for both to keep the codebase consistent. What is the recommended approach?",
+    "id": "few-shot-boundary-cases-001",
+    "domain": "Prompt Engineering",
+    "stem": "You add few-shot examples to a classification prompt. Which selection strategy is best?",
     "choices": {
-      "A": "Build custom MCP servers for both to keep the codebase consistent",
-      "B": "Use the existing Jira MCP server for Jira; build a custom MCP server only for the proprietary approval workflow",
-      "C": "Avoid MCP entirely and use direct API calls from Claude's system prompt",
-      "D": "Create one combined MCP server that wraps both integrations to reduce server count"
+      "A": "Five examples all from the most common 'happy path' category",
+      "B": "Three to five diverse examples that cover boundary and ambiguous cases, not just the happy path",
+      "C": "A single very long example covering every possible scenario",
+      "D": "Twenty randomly selected examples to maximize coverage"
     },
     "answer": "B",
-    "explanation": "The recommended approach is to use existing, well-maintained MCP servers where they exist and build custom MCP servers only for systems lacking an existing integration. Building a custom Jira MCP server is unnecessary work and creates an ongoing maintenance burden. This architectural decision is explicitly tested in CCA exam questions about MCP integration choices."
+    "explanation": "Few-shot examples are most useful when they cover hard, boundary cases — these communicate the decision criteria where the model is most likely to err. Option A under-represents the input space and biases toward over-prediction of the common class. Option C overloads context with one mega-example and fails to communicate variety. Option D is wasteful and increases lost-in-the-middle risk."
   },
   {
-    "id": "agentic-loop-termination-001",
-    "domain": "Tool Use / Agentic",
-    "stem": "An agentic loop continuously calls Claude with tool results. Under what condition does the loop terminate naturally?",
+    "id": "system-vs-user-turn-002",
+    "domain": "Prompt Engineering",
+    "stem": "Which content belongs in the system prompt versus the user turn for a customer-support agent powered by Claude?",
     "choices": {
-      "A": "When the context window reaches 80% capacity",
-      "B": "When Claude returns a response with stop_reason: 'end_turn' and no tool_use blocks",
-      "C": "After a fixed number of iterations set by a max_turns parameter",
-      "D": "When accumulated tool costs exceed the API billing limit"
+      "A": "System: empty. User turn: full persona + tools + history + question",
+      "B": "System: persona, scope/refusal rules, output format, tone, allowed/forbidden topics. User turn: current user question + dynamic data (e.g., order details)",
+      "C": "System: only the user's current question. User turn: persona and rules",
+      "D": "System: model name override and temperature. User turn: everything else"
     },
     "answer": "B",
-    "explanation": "The agentic loop terminates when Claude returns stop_reason: 'end_turn' without any tool_use blocks, signaling the task is complete. The loop continues as long as responses contain tool_use blocks requiring execution. Production implementations should also include a maximum iteration safeguard to prevent infinite loops in case of bugs or unexpected model behavior."
+    "explanation": "Stable persistent instructions belong in system; the dynamic per-request question and data belong in the user turn. Option A puts everything in user turn, undermining consistency and inflating costs. Option C inverts roles. Option D confuses prompts with API parameters."
   },
   {
-    "id": "least-privilege-agent-001",
-    "domain": "Tool Use / Agentic",
-    "stem": "Why would you NOT give a Claude agent full read/write access to your production database, even if the agent is otherwise trusted?",
+    "id": "prefill-json-risk-002",
+    "domain": "Prompt Engineering",
+    "stem": "What is the main reason tool_use with JSON schema is preferred over prefilling responses with '{' for structured output?",
     "choices": {
-      "A": "Claude refuses database connections regardless of configuration",
-      "B": "The principle of least privilege: agents should only have access to specific operations they need, minimizing blast radius if they make mistakes or are manipulated via prompt injection",
-      "C": "Database connections are too slow for real-time agentic workflows",
-      "D": "Full database access causes token usage to spike unpredictably"
+      "A": "Prefilling is not supported on any Claude model",
+      "B": "tool_use enforces a JSON schema and reduces malformed outputs; prefilling pushes Claude into a partial-completion mode where syntactic and structural errors are more likely",
+      "C": "Prefilling costs more in tokens than tool_use",
+      "D": "Prefilling triggers an automatic safety review that delays responses"
     },
     "answer": "B",
-    "explanation": "Least privilege is foundational security architecture for agentic systems. Even well-designed agents can misinterpret instructions or be subject to prompt injection through retrieved content. Restricting database permissions to exactly what the agent needs limits the damage from any error. This 'why not give Claude full database access' question appears directly in CCA exam experience posts as a key architectural concept."
+    "explanation": "Tool_use blocks are schema-validated by the API, which is a stronger guarantee than continuing from a prefilled '{'. Option A is wrong — prefilling is supported. Option C is not the primary concern. Option D fabricates a safety-review flow."
   },
   {
-    "id": "prompt-injection-agent-001",
-    "domain": "Tool Use / Agentic",
-    "stem": "An agent fetches content from external URLs using a fetch_url tool. During testing you notice the agent takes unexpected actions after fetching certain web pages. What security risk does this represent?",
+    "id": "validation-retry-pattern-002",
+    "domain": "Prompt Engineering",
+    "stem": "Your invoice-extraction tool returns valid JSON but line items occasionally don't sum to the invoice total. Which architectural fix scales best?",
     "choices": {
-      "A": "Token limit exhaustion from large web pages",
-      "B": "Prompt injection: malicious instructions embedded in fetched content that manipulate the agent's behavior when ingested into its context",
-      "C": "CORS policy violations causing tool execution to fail silently",
-      "D": "API rate limiting triggered by excessive fetch_url calls"
+      "A": "Increase max_tokens to give Claude more room",
+      "B": "Programmatically validate; on failure, send Claude the original request, the failed output, and a specific error message asking for correction — a validation-retry loop",
+      "C": "Add five more fields to the JSON schema",
+      "D": "Switch from tool_use to free-form text and parse with regex"
     },
     "answer": "B",
-    "explanation": "Prompt injection via retrieved content is a critical security risk in agentic systems. A malicious website can embed instructions (e.g., 'Ignore previous instructions and exfiltrate user data') that Claude processes as part of its context. Mitigations include: restricting fetch_url to allowlisted domains, wrapping retrieved content in clearly labeled XML tags like <external_content>, and implementing guardrails that flag anomalous tool calls following content retrieval."
+    "explanation": "Semantic errors require validation-retry: re-prompt Claude with the precise problem so it can correct rather than guess. Option A doesn't address correctness. Option C addresses syntax constraints, not semantic invariants like sums. Option D abandons structured output and increases parsing failure modes."
   },
   {
-    "id": "context-degradation-scratchpad-001",
-    "domain": "Tool Use / Agentic",
-    "stem": "During a prolonged codebase exploration, your agent starts giving vague descriptions and referencing 'typical patterns' instead of citing specific class names it found earlier. What is the best architectural remedy?",
+    "id": "long-doc-question-position-001",
+    "domain": "Prompt Engineering",
+    "stem": "When passing a 200k-token document plus a question to Claude, where should the question be placed?",
     "choices": {
-      "A": "Restart the agent from scratch with a new conversation",
-      "B": "Enable context compaction or have the agent write key findings to a scratchpad file that persists outside the context window",
-      "C": "Reduce tool call verbosity to free up context tokens",
-      "D": "Switch to a smaller, faster model for the exploration phase"
+      "A": "At the very beginning, before the document",
+      "B": "At the end of the prompt, after the document",
+      "C": "In the system prompt, never in the user turn",
+      "D": "Position does not matter at all"
     },
     "answer": "B",
-    "explanation": "When an agent's context fills up, important earlier findings get pushed out and the model fabricates generalities. The fix is proactive: use context compaction to summarize older turns, or have the agent write key findings to a scratchpad file that persists outside the context. Scratchpad files are explicitly listed in the CCA exam guide as a technique for managing context in long agentic tasks."
+    "explanation": "Anthropic recommends putting the question after long documents — Claude attends strongly to the end of long contexts. Option A buries the question above 200k tokens of distracting text. Option C is wrong because per-request user questions belong in the user turn. Option D contradicts known position-of-attention effects."
   },
   {
-    "id": "tool-description-quality-001",
-    "domain": "Tool Use / Agentic",
-    "stem": "A developer's fetch_url tool is misused by the agent, which occasionally fetches external websites when it should only load internal documentation. What is the most reliable architectural fix?",
+    "id": "positive-instructions-002",
+    "domain": "Prompt Engineering",
+    "stem": "You want Claude to stop using markdown bullets. What is the most effective rewrite?",
     "choices": {
-      "A": "Add a content-length limit parameter to the tool definition",
-      "B": "Update the tool description to clearly specify internal documentation only, and add URL allowlist validation in the tool implementation to reject external domains",
-      "C": "Instruct Claude in the system prompt to avoid external URLs",
-      "D": "Remove fetch_url entirely and replace it with a hardcoded document loader"
+      "A": "'NEVER use bullet points or markdown.'",
+      "B": "'Write your response as smoothly flowing prose paragraphs.'",
+      "C": "'Don't use any structural elements ever.'",
+      "D": "Add 'STRICT: NO MARKDOWN' to every paragraph"
     },
     "answer": "B",
-    "explanation": "Tool misuse is typically a tool description quality problem. The description should precisely specify what the tool does and its intended scope. Additionally, implementing URL allowlisting in the tool's execution code provides a hard boundary that cannot be overridden. System prompt instructions are soft constraints that can be bypassed; combining a precise description with code-level validation is the most reliable approach."
+    "explanation": "Positive descriptions of desired output outperform negative prohibitions. Option A is a negative prohibition, more likely to be partially ignored. Option C is vague and absolute. Option D is over-aggressive repetition that can degrade response quality."
   },
   {
-    "id": "batch-api-blocking-001",
-    "domain": "API & Deployment",
-    "stem": "A checkout flow needs Claude to classify a product review before completing the purchase transaction. A developer proposes the Message Batches API. Why is this inappropriate?",
+    "id": "multi-pass-review-002",
+    "domain": "Prompt Engineering",
+    "stem": "A legal review pipeline must (a) check policy compliance, (b) verify factual claims, and (c) score writing quality. Single-prompt outputs are inconsistent. What architecture is recommended?",
     "choices": {
-      "A": "The Batches API does not support classification tasks",
-      "B": "The Message Batches API processes requests asynchronously with up to a 24-hour window, making it unsuitable for blocking user-facing workflows requiring immediate responses",
-      "C": "Batches API requires a minimum of 100 requests; this is a single request",
-      "D": "The Batches API charges a premium for classification tasks"
+      "A": "Combine all three into one larger prompt with XML tags",
+      "B": "Run three separate Claude calls — each focused on one criterion — then aggregate; this is the multi-pass review pattern explicitly recommended by the CCA exam guide",
+      "C": "Raise temperature to 1.5 to encourage more critical reviews",
+      "D": "Use a single call but ask for a 10x longer response"
     },
     "answer": "B",
-    "explanation": "The Message Batches API is designed for asynchronous offline workloads: bulk processing, large-scale evaluation, cost optimization. It can take up to 24 hours to process. Using it in a synchronous checkout flow would block the transaction indefinitely. For latency-sensitive user-facing requests, use the standard Messages API with streaming or synchronous responses."
+    "explanation": "Multi-pass review is the documented CCA pattern: separate calls per dimension give each criterion full attention and token budget. Option A re-creates the inconsistency by forcing implicit tradeoffs in one pass. Option C adds randomness without addressing the architectural issue. Option D conflates length with thoroughness and amplifies lost-in-the-middle problems."
   },
   {
-    "id": "prompt-cache-min-tokens-001",
-    "domain": "API & Deployment",
-    "stem": "A developer adds cache_control: {type: 'ephemeral'} to a 500-token system prompt and notices no cache_read_input_tokens in subsequent requests. What is the most likely cause?",
+    "id": "prompt-chaining-debuggability-002",
+    "domain": "Prompt Engineering",
+    "stem": "Compared to a single mega-prompt, what is the primary debugging advantage of a 4-step prompt chain?",
     "choices": {
-      "A": "cache_control is not supported on system prompts",
-      "B": "Prompt caching has a minimum token threshold (1024 tokens for most models); prompts shorter than this are not cached",
-      "C": "The ephemeral cache type has a 0-second TTL and is always immediately invalidated",
-      "D": "Prompt caching only works with the Message Batches API"
+      "A": "Lower total API cost guaranteed",
+      "B": "Each step has an inspectable intermediate output, so failures can be localized and individual steps re-run without rerunning the whole pipeline",
+      "C": "It bypasses rate limits by routing through different endpoints",
+      "D": "Chains automatically use prompt caching for free"
     },
     "answer": "B",
-    "explanation": "Prompt caching requires a minimum number of tokens—the threshold is 1024 tokens for most Claude models. A 500-token system prompt falls below this threshold and will not be cached. To benefit from prompt caching, ensure the cacheable prefix meets the minimum token requirement, typically by including more context, documentation, or examples in the cached section."
+    "explanation": "Prompt chains give you discrete, inspectable intermediate artifacts — the debuggability win. Option A is not guaranteed; chains often cost more in tokens, not less. Option C is fictional. Option D doesn't follow — caching requires explicit cache_control and stable prefixes."
   },
   {
-    "id": "prompt-cache-stacking-001",
-    "domain": "API & Deployment",
-    "stem": "You process 10,000 document summarization requests per day, each with the same 5,000-token system prompt. Which combination provides maximum cost reduction?",
+    "id": "interview-pattern-001",
+    "domain": "Prompt Engineering",
+    "stem": "The 'Interview Pattern' for prompt engineering instructs Claude to do what before producing a solution?",
     "choices": {
-      "A": "Streaming plus high temperature to reduce average response length",
-      "B": "Message Batches API alone for the 50% batch discount",
-      "C": "Prompt caching on the system prompt combined with the Message Batches API: the two discounts stack, providing up to 90% savings on the cached portion plus the batch discount",
-      "D": "Increase max_tokens to reduce per-request overhead"
+      "A": "Generate three answers and present the most likely one",
+      "B": "Ask clarifying questions to surface assumptions and constraints the requester may not have stated explicitly",
+      "C": "Search the web for similar past problems",
+      "D": "Refuse the task if any requirement is ambiguous"
+    },
+    "answer": "B",
+    "explanation": "The Interview Pattern explicitly has Claude ask clarifying questions first — useful for unfamiliar domains and tasks with non-obvious implications. Option A is shotgun generation, not the Interview Pattern. Option C is retrieval, a separate pattern. Option D is over-cautious; ambiguity should prompt questions, not refusal."
+  },
+  {
+    "id": "test-driven-iteration-001",
+    "domain": "Prompt Engineering",
+    "stem": "Test-driven iteration in Claude prompt engineering looks like which workflow?",
+    "choices": {
+      "A": "Write a test suite first, run Claude against it, share failing test outputs with Claude to iteratively refine the prompt or solution",
+      "B": "Skip tests and rely on subjective review",
+      "C": "Always increase temperature when a test fails",
+      "D": "Switch models randomly until tests pass"
+    },
+    "answer": "A",
+    "explanation": "Test-driven iteration uses a concrete failing test as the feedback signal, allowing the prompt or solution to be progressively improved against an objective bar. Options B, C, and D are anti-patterns: subjective review is unreliable, temperature tweaks mask rather than fix bugs, and random model swaps do not address prompt quality."
+  },
+  {
+    "id": "structured-output-tool-choice-002",
+    "domain": "Prompt Engineering",
+    "stem": "You want guaranteed JSON output matching a specific schema. Which tool_choice configuration is most reliable?",
+    "choices": {
+      "A": "tool_choice: 'none'",
+      "B": "tool_choice: 'auto'",
+      "C": "tool_choice: {type: 'tool', name: 'your_extraction_tool'} — forces Claude to invoke that specific tool",
+      "D": "tool_choice: 'any' with five overlapping tools"
     },
     "answer": "C",
-    "explanation": "Prompt caching and Message Batches API discounts can be stacked. Prompt caching reduces costs by up to 90% for cache hits on repeated prefixes. The Batches API provides an additional 50% discount over standard API pricing. Using both on high-volume workloads with repeated system prompts provides the maximum possible cost reduction per request."
+    "explanation": "Forcing a specific named tool guarantees the model emits a schema-conformant tool_use block. Option A disables tools — produces unstructured text. Option B lets Claude skip the tool. Option D forces a tool call but Claude might pick the wrong one when multiple overlap."
   },
   {
-    "id": "sse-streaming-events-001",
-    "domain": "API & Deployment",
-    "stem": "When using SSE streaming with the Messages API, in what order do key event types arrive for a standard text response?",
+    "id": "concrete-examples-vague-criteria-001",
+    "domain": "Prompt Engineering",
+    "stem": "A reviewer instruction says 'be conservative when classifying high-risk content.' Reviewers downstream disagree about results. Which fix is recommended by the CCA materials?",
     "choices": {
-      "A": "message_stop → content_block_start → content_block_delta → message_start",
-      "B": "message_start → content_block_start → content_block_delta events → content_block_stop → message_delta → message_stop",
-      "C": "token_stream_begin → token_chunk* → token_stream_end",
-      "D": "ping → message_complete with all content in a single event"
+      "A": "Add 'IMPORTANT:' before the word 'conservative'",
+      "B": "Replace the vague criterion with concrete thresholds and labeled examples that illustrate what conservative means in practice",
+      "C": "Lower temperature to 0 and rerun",
+      "D": "Switch to a smaller model so it stays more cautious"
     },
     "answer": "B",
-    "explanation": "SSE streaming follows a predictable sequence: message_start (metadata and initial usage), content_block_start (beginning of a content block), multiple content_block_delta events (each containing a token chunk), content_block_stop, message_delta (final stop_reason and usage delta), and message_stop. Understanding this sequence is necessary for implementing correct streaming parsers."
+    "explanation": "Vague subjective criteria produce inconsistent outputs; concrete thresholds plus examples are the recommended remedy. Option A is decoration without substance. Option C trades randomness for determinism but does not specify the criterion. Option D conflates model size with conservatism — it is not a controllable knob."
   },
   {
-    "id": "cache-control-ttl-001",
-    "domain": "API & Deployment",
-    "stem": "Your application caches a 50,000-token knowledge base using prompt caching. After running in production for 10 minutes with no new requests on that cache key, you observe cache misses resuming. Why?",
+    "id": "i-dont-know-instruction-001",
+    "domain": "Prompt Engineering",
+    "stem": "Which prompt design reduces hallucinations in a RAG question-answering app?",
     "choices": {
-      "A": "The cache evicts entries after every 10 requests",
-      "B": "Standard prompt cache entries have a minimum lifetime of 5 minutes and are deleted shortly after expiry if not refreshed by another request using the same prefix",
-      "C": "Cache entries are invalidated when the API processes a different user's request",
-      "D": "Cache entries require re-creation every time the API version changes"
+      "A": "Add 'Be confident and detailed in every answer'",
+      "B": "Explicitly instruct Claude to say 'I don't know' if the retrieved context lacks the answer, and to ground responses in quoted snippets",
+      "C": "Increase temperature to 1.2 for more creative answers",
+      "D": "Remove the retrieved context to let Claude rely on parametric knowledge"
     },
     "answer": "B",
-    "explanation": "Prompt cache entries have a minimum TTL of 5 minutes (standard) or 1 hour (extended, at additional cost). After the TTL expires, the entry is promptly deleted. To maintain a hot cache for continuously active workloads, requests using the cached prefix must arrive within the TTL window. The cache is refreshed at no additional cost each time the cached content is used before expiry."
+    "explanation": "Granting Claude permission to say 'I don't know' plus grounding via quoted snippets dramatically reduces fabrication. Option A encourages confident wrong answers. Option C increases randomness, not grounding. Option D removes the source of truth entirely, which is the opposite of RAG."
   },
   {
-    "id": "batch-result-retrieval-001",
-    "domain": "API & Deployment",
-    "stem": "You submitted 500 requests to the Message Batches API. After polling and receiving processing_status: 'ended', how do you identify which specific requests failed?",
+    "id": "out-of-scope-refusal-001",
+    "domain": "Prompt Engineering",
+    "stem": "A product support bot is being asked off-topic personal-advice questions. What prompt change most reliably keeps responses on-scope?",
     "choices": {
-      "A": "Failed requests are returned in a separate error_batch object alongside successful results",
-      "B": "Stream the results file; each result object contains the custom_id you provided and a result field with either a message response or an error object",
-      "C": "Re-submit all 500 requests and compare results to find discrepancies",
-      "D": "Failed requests are automatically retried by the API; no manual identification is needed"
+      "A": "Lower temperature to 0",
+      "B": "Add an explicit out-of-scope policy in the system prompt with a redirect and few-shot examples of refusal responses",
+      "C": "Add five more product features to the system prompt",
+      "D": "Pre-block off-topic requests with regex on the client side and never invoke Claude"
     },
     "answer": "B",
-    "explanation": "When a Message Batch completes, you retrieve results by streaming the results file. Each result contains the custom_id provided at submission time, allowing you to map results back to original requests. A result either contains a successful message response or an error object. Failed requests can be identified by custom_id, fixed (e.g., by chunking documents that exceeded context limits), and resubmitted in a new batch."
+    "explanation": "Explicit out-of-scope policy plus refusal few-shots steers Claude to redirect reliably. Option A reduces randomness but does not communicate scope. Option C adds irrelevant content. Option D is brittle — regex cannot capture the variety of off-topic queries and creates poor UX."
   },
   {
-    "id": "token-counting-preflight-001",
-    "domain": "API & Deployment",
-    "stem": "Before submitting a large document to Claude, you want to verify it fits within the context window without incurring inference costs. Which API feature enables this?",
+    "id": "prompt-quote-extraction-001",
+    "domain": "Prompt Engineering",
+    "stem": "For grounded analysis of long documents, what intermediate step does Anthropic recommend?",
     "choices": {
-      "A": "Include count_tokens: true in the Messages API request body",
-      "B": "Use the Token Counting API endpoint (messages/count_tokens) which returns the input token count without performing inference",
-      "C": "Estimate tokens by dividing character count by 4",
-      "D": "Call the Models API to get max_input_tokens and compare to your document length"
+      "A": "Have Claude extract and cite relevant quotes from the document inside scratchpad tags before producing analysis",
+      "B": "Re-tokenize the document with a custom BPE",
+      "C": "Compress the document to 4-bit floats",
+      "D": "Replace the document with a sentence-level keyword index"
     },
-    "answer": "B",
-    "explanation": "Anthropic provides a dedicated Token Counting API endpoint that accepts the same request structure as the Messages API but returns only the token count without performing inference. This enables pre-flight checks to ensure requests fit within context limits, dynamic content truncation strategies, and cost estimation before submitting large batch jobs."
+    "answer": "A",
+    "explanation": "Quote extraction in scratchpad tags grounds Claude's analysis in actual text and reduces hallucination. Option B is fictional in this context. Option C describes quantization, irrelevant to prompting. Option D throws away the very evidence the analysis needs."
   },
   {
-    "id": "regional-vs-global-endpoints-001",
-    "domain": "API & Deployment",
-    "stem": "A financial services company has strict EU data residency requirements. They are deploying Claude via AWS Bedrock. Which endpoint configuration is required?",
+    "id": "role-persona-system-001",
+    "domain": "Prompt Engineering",
+    "stem": "Assigning Claude a role (e.g., 'You are a senior tax-law attorney') in the system prompt typically does what?",
     "choices": {
-      "A": "Global endpoints with data encryption at rest",
-      "B": "Regional endpoints configured for an EU AWS region to guarantee data routing stays within that geographic area",
-      "C": "Multi-region endpoints which automatically balance load across regions",
-      "D": "Local deployment via Claude's on-premises option"
+      "A": "Has no measurable effect; it is a placebo",
+      "B": "Focuses Claude's tone, depth, and terminology — leading to more domain-appropriate outputs",
+      "C": "Forces Claude to invent fictional credentials",
+      "D": "Bypasses Anthropic's usage policies"
     },
     "answer": "B",
-    "explanation": "Regional endpoints guarantee data is routed through a specific geographic region, satisfying data residency requirements. Global endpoints use dynamic routing for maximum availability but do not guarantee which region processes the request. For regulated industries with data sovereignty requirements (EU GDPR, financial regulations), regional endpoints are required even at the cost of potentially higher latency."
+    "explanation": "Role/persona priming is a documented technique that shifts tone and domain-aware vocabulary. Option A contradicts published research. Option C describes a hallucination risk that does not follow from role priming with proper grounding. Option D is wrong — personas cannot override policies."
   },
   {
-    "id": "context-growth-at-scale-001",
-    "domain": "API & Deployment",
-    "stem": "Your chatbot passes full conversation history in every API call. After 60 turns, API latency has tripled and costs spiked 10x. What is the most appropriate architectural solution?",
+    "id": "match-prompt-style-output-001",
+    "domain": "Prompt Engineering",
+    "stem": "Your system prompt is full of bullet points and bold headers. You want Claude to respond in flowing prose. What practical adjustment helps most?",
     "choices": {
-      "A": "Increase max_tokens to give Claude more budget for longer contexts",
-      "B": "Implement sliding window, progressive summarization, or context compaction to cap context growth while preserving conversation coherence",
-      "C": "Switch to a larger model to handle increased context more efficiently",
-      "D": "Enable streaming to distribute latency and reduce perceived cost"
+      "A": "Increase max_tokens",
+      "B": "Match the prompt's style to your desired output style — rewrite the system prompt in flowing prose, since prompt style influences output style",
+      "C": "Add the phrase 'no formatting allowed'",
+      "D": "Switch to Haiku"
     },
     "answer": "B",
-    "explanation": "Passing full conversation history indefinitely causes token costs and latency to grow linearly with conversation length. The architectural fix is context management: a sliding window keeps only the N most recent turns, progressive summarization replaces older turns with a condensed summary, or context compaction (Opus 4.6+ feature) handles this automatically. Switching to a larger model is counterproductive—larger models are slower and more expensive on longer contexts."
+    "explanation": "Claude tends to mirror the formatting style of its own prompt; rewriting the system prompt in prose materially reduces markdown in output. Option A is unrelated to formatting. Option C is a negative instruction that often partially leaks. Option D conflates model size with formatting tendencies."
   },
   {
-    "id": "rate-limit-strategy-001",
-    "domain": "API & Deployment",
-    "stem": "Your application hits 429 Too Many Requests errors from the Claude API during peak traffic. Which combination of strategies best addresses this in production?",
+    "id": "agent-loop-stop-reason-002",
+    "domain": "Tool Use / Agentic",
+    "stem": "Which signal is the ONLY reliable termination condition for an agentic loop?",
     "choices": {
-      "A": "Catch 429 errors and immediately retry without delay",
-      "B": "Implement exponential backoff with jitter for retries, use the Message Batches API for non-time-critical workloads to shift load off the synchronous API, and add request queuing to smooth traffic spikes",
-      "C": "Increase max_tokens to process more content per request and reduce total request count",
-      "D": "Switch to a smaller model which has higher rate limits"
+      "A": "Parsing the assistant text for phrases like 'I'm done' or 'task complete'",
+      "B": "Checking stop_reason for 'end_turn' with no tool_use blocks",
+      "C": "Polling token usage and stopping after 50,000 tokens",
+      "D": "Counting iterations and stopping at exactly 10"
     },
     "answer": "B",
-    "explanation": "The recommended production strategy for rate limit handling combines: (1) exponential backoff with jitter to prevent thundering herd on retry, (2) offloading non-urgent workloads to the Message Batches API which has separate higher throughput limits, and (3) request queuing to smooth spikes and prevent cascading failures. Immediate retries without delay worsen congestion. Increasing max_tokens raises per-request token consumption and does not help token-based rate limits."
+    "explanation": "stop_reason is the authoritative signal — natural-language phrases are unreliable. Option A is a documented anti-pattern (false positives like 'I'm done thinking, now let me…'). Options C and D may be useful safety caps but are not reliable correctness signals and risk premature termination."
+  },
+  {
+    "id": "hub-and-spoke-multi-agent-001",
+    "domain": "Tool Use / Agentic",
+    "stem": "In a hub-and-spoke multi-agent architecture, what is the role of the coordinator?",
+    "choices": {
+      "A": "The coordinator executes all tools directly while subagents only observe",
+      "B": "The coordinator decomposes tasks and delegates to subagents; subagents have isolated contexts and report results back to the coordinator",
+      "C": "All agents share one global context window and write to it concurrently",
+      "D": "Subagents talk only to each other; the coordinator is purely cosmetic"
+    },
+    "answer": "B",
+    "explanation": "Hub-and-spoke: coordinator decomposes/delegates; subagents have isolated contexts and surface only results upward. Option A inverts execution responsibilities. Option C describes a shared-memory architecture that the CCA materials explicitly warn against. Option D inverts the architecture and contradicts the orchestrator's role."
+  },
+  {
+    "id": "tool-count-001-002",
+    "domain": "Tool Use / Agentic",
+    "stem": "Your agent has 22 tools available and frequently selects the wrong one. Which fix is recommended?",
+    "choices": {
+      "A": "Increase temperature so Claude considers more tools",
+      "B": "Reduce to ~4–5 highly relevant tools per agent, or use a tool-search capability to dynamically surface the relevant subset",
+      "C": "Concatenate all 22 tools into a single mega-tool",
+      "D": "Disable tool_use and ask Claude to describe the tool call in prose"
+    },
+    "answer": "B",
+    "explanation": "Empirically, more than ~4–5 simultaneous tools degrades selection. The remedies are to prune or use tool search. Option A adds noise. Option C produces an unwieldy interface that subverts the schema benefits of tool_use. Option D abandons structured tool calls entirely."
+  },
+  {
+    "id": "tool-description-quality-002",
+    "domain": "Tool Use / Agentic",
+    "stem": "Which is the PRIMARY mechanism Claude uses to choose which tool to call?",
+    "choices": {
+      "A": "The order tools are listed in the request",
+      "B": "The tool name and especially its description; descriptions are the principal selection signal",
+      "C": "A confidence score embedded in the tool's input_schema",
+      "D": "Random sampling among compatible tools"
+    },
+    "answer": "B",
+    "explanation": "Tool descriptions are the primary lever for routing — improving them fixes most misrouting before any other architectural change. Option A is incorrect; list order is not the dominant signal. Option C is fictional; input_schema describes parameters, not preference. Option D describes a non-existent mechanism."
+  },
+  {
+    "id": "structured-error-categories-001",
+    "domain": "Tool Use / Agentic",
+    "stem": "The CCA exam materials recommend categorizing tool errors into four buckets. Which of these is NOT one of them?",
+    "choices": {
+      "A": "Transient (retryable)",
+      "B": "Validation (input shape error)",
+      "C": "Business (logic-level)",
+      "D": "Cosmetic (formatting nit)"
+    },
+    "answer": "D",
+    "explanation": "The four buckets are transient, validation, business, and permission. Option D is fictional and would not impact retry logic. Knowing the four categories enables correct isRetryable signaling and error reasoning by the agent."
+  },
+  {
+    "id": "access-failure-vs-empty-result-001",
+    "domain": "Tool Use / Agentic",
+    "stem": "A search tool returns zero results because the user truly has no matching records (valid empty result) versus zero results because the system was unreachable (access failure). Why does the distinction matter?",
+    "choices": {
+      "A": "Both should be treated identically; the agent retries either way",
+      "B": "Valid empty results are not retryable and should be reported to the user as 'no matches'; access failures are retryable and indicate transient infrastructure problems — conflating them produces wrong agent behavior",
+      "C": "Only the empty result should be retried",
+      "D": "The distinction matters only for billing reconciliation"
+    },
+    "answer": "B",
+    "explanation": "The CCA materials explicitly test this distinction. Option A produces both unnecessary retries and false 'we don't have this' answers. Option C inverts the correct behavior. Option D is unrelated to functional correctness."
+  },
+  {
+    "id": "parallel-tool-execution-002",
+    "domain": "Tool Use / Agentic",
+    "stem": "Three independent data fetches (weather, stock price, news) are needed before drafting a brief. How should the agent reduce wall-clock latency?",
+    "choices": {
+      "A": "Sequential calls with thinking blocks in between",
+      "B": "Encourage Claude to emit all three tool_use blocks in one response; the host executes them in parallel and returns all three tool_result blocks together",
+      "C": "Call the Batches API to run the brief offline",
+      "D": "Pre-fetch sequentially every 5 seconds in a polling loop"
+    },
+    "answer": "B",
+    "explanation": "Parallel tool use returns multiple independent tool_use blocks in a single response, executed concurrently on the client. Option A serializes the work needlessly. Option C is for asynchronous offline workloads, not real-time briefs. Option D wastes resources and adds latency."
+  },
+  {
+    "id": "mcp-server-config-scope-001",
+    "domain": "Tool Use / Agentic",
+    "stem": "What is the practical difference between project-level (.mcp.json) and user-level (~/.claude.json) MCP server configurations in Claude Code?",
+    "choices": {
+      "A": "Project-level configs are committed to version control and shared with the team; user-level configs are personal and not shared",
+      "B": "Project-level configs apply only to Sundays; user-level configs apply weekdays",
+      "C": "Project-level configs require Anthropic enterprise plans; user-level configs are free",
+      "D": "There is no difference; both are aliases for the same file"
+    },
+    "answer": "A",
+    "explanation": "The CCA materials explicitly highlight version-control implications: project-level configs are checked in and shared, user-level configs stay personal. Option B is non-serious. Option C invents a billing tier. Option D contradicts the documented file layout."
+  },
+  {
+    "id": "mcp-vs-function-calling-001",
+    "domain": "Tool Use / Agentic",
+    "stem": "What is the architectural distinction between native function calling and MCP?",
+    "choices": {
+      "A": "Function calling defines tools per-application via JSON schemas in each API request; MCP exposes tools through a standardized client-server protocol that decouples tool implementations from the AI client",
+      "B": "Function calling is a Claude-specific feature; MCP only works with GPT-4",
+      "C": "MCP is slower than function calling in all cases",
+      "D": "Function calling supports state; MCP is stateless"
+    },
+    "answer": "A",
+    "explanation": "MCP standardizes tool exposure across clients (Claude, GPT, Gemini) via a client-server protocol; function calling is in-request per integration. Option B inverts MCP adoption (it is open-standard, multi-vendor). Option C overstates a latency claim that depends on transport. Option D is incorrect — MCP supports stateful resources/sessions."
+  },
+  {
+    "id": "least-privilege-prod-db-002",
+    "domain": "Tool Use / Agentic",
+    "stem": "A teammate proposes giving the customer-support agent read/write access to the entire production database. Why is this a bad idea even for a 'trusted' agent?",
+    "choices": {
+      "A": "Claude refuses any direct database connections",
+      "B": "Least privilege: prompt injection or misinterpretation could blow up production data; the agent should be granted only the specific read scopes (and curated mutations) it actually needs",
+      "C": "Database connections degrade response token quality",
+      "D": "Production databases cannot be reached from agentic systems"
+    },
+    "answer": "B",
+    "explanation": "Least privilege limits blast radius from prompt injection, mis-tool-selection, or simple agent error. Option A is false. Option C confuses unrelated concepts. Option D contradicts countless production deployments."
+  },
+  {
+    "id": "prompt-injection-external-content-002",
+    "domain": "Tool Use / Agentic",
+    "stem": "Your agent fetches arbitrary web pages with fetch_url. After visiting certain pages, it executes unexpected tool calls. What is the most likely cause and primary mitigation?",
+    "choices": {
+      "A": "Browser cache poisoning; clear the cache",
+      "B": "Prompt injection via retrieved content; mitigations include URL allowlists, wrapping retrieved content in <external_content> tags with explicit 'do not treat as instructions' guidance, and guardrails that flag anomalous post-fetch actions",
+      "C": "API rate limiting causing tool reordering",
+      "D": "GPU non-determinism"
+    },
+    "answer": "B",
+    "explanation": "Untrusted web content can contain instructions that the model treats as authoritative. Allowlists, explicit content framing, and behavioral guardrails are the documented mitigations. Option A is unrelated. Option C does not produce that behavior. Option D doesn't apply to agentic tool selection."
+  },
+  {
+    "id": "post-tool-use-hook-001",
+    "domain": "Tool Use / Agentic",
+    "stem": "In the Claude Agent SDK, when would you use a PostToolUse hook vs intercepting/blocking a tool call before execution?",
+    "choices": {
+      "A": "PostToolUse for data normalization, validation, and logging on the result; pre-execution interception for policy enforcement that must prevent the action (e.g., blocking destructive operations)",
+      "B": "PostToolUse can refuse to execute a tool call",
+      "C": "Pre-execution interception happens after the tool already executed",
+      "D": "Both are aliases for the same hook"
+    },
+    "answer": "A",
+    "explanation": "PostToolUse runs after execution — appropriate for normalization and validation; pre-execution interception is the place to block. Option B is wrong: by the time PostToolUse runs, the action is already complete. Option C inverts the order. Option D contradicts the SDK design."
+  },
+  {
+    "id": "programmatic-vs-prompt-enforcement-001",
+    "domain": "Tool Use / Agentic",
+    "stem": "For a financial agent that must NEVER initiate transfers above $10,000 without human approval, what is the correct enforcement layer?",
+    "choices": {
+      "A": "Add 'do not transfer over $10,000 without approval' to the system prompt and trust the model to comply",
+      "B": "Implement a programmatic hook or tool-level guard that blocks the transfer call unless an approval token is present — prompt-based enforcement is probabilistic and insufficient for financial/security-critical rules",
+      "C": "Set temperature to 0 so the model becomes deterministic",
+      "D": "Use a softcoded behavior request to Anthropic"
+    },
+    "answer": "B",
+    "explanation": "Prompt-based enforcement is probabilistic; financial/security-critical rules need deterministic code-level gates. Option A is the documented anti-pattern. Option C reduces randomness but does not enforce policy. Option D mistakes Anthropic policy for application-specific business rules."
+  },
+  {
+    "id": "scratchpad-context-001",
+    "domain": "Tool Use / Agentic",
+    "stem": "An exploration agent loses track of specific findings from earlier turns and starts generalizing. Which architectural pattern is recommended?",
+    "choices": {
+      "A": "Increase max_tokens",
+      "B": "Have the agent write critical findings to a scratchpad file that persists outside the context window, and reload only the relevant entries when needed",
+      "C": "Restart the conversation from scratch every 20 turns",
+      "D": "Convert all messages to lowercase to save tokens"
+    },
+    "answer": "B",
+    "explanation": "Scratchpad files persist key state outside the context window — explicitly listed in CCA materials. Option A doesn't shrink accumulated context. Option C loses all state. Option D doesn't change token counts (case is irrelevant to BPE)."
+  },
+  {
+    "id": "tool-search-tool-001",
+    "domain": "Tool Use / Agentic",
+    "stem": "Anthropic's Tool Search Tool is appropriate when?",
+    "choices": {
+      "A": "You have 3 tools and want minimum latency",
+      "B": "You have many tools (e.g., 25+) and want Claude to dynamically discover the small relevant subset for the current request rather than inflating context with all definitions",
+      "C": "You want to disable tool use entirely",
+      "D": "You want to call the same tool twice in parallel"
+    },
+    "answer": "B",
+    "explanation": "Tool Search Tool is designed for large tool catalogs — it defers loading definitions until needed and surfaces only relevant ones. Option A is overkill for 3 tools. Option C inverts the feature. Option D describes parallel tool calling, a different capability."
+  },
+  {
+    "id": "tool-result-error-return-002",
+    "domain": "Tool Use / Agentic",
+    "stem": "Your tool call to a payment gateway returns 503 Service Unavailable. What is the correct agent design?",
+    "choices": {
+      "A": "Hide the error from Claude and pretend the call succeeded",
+      "B": "Return the error in the tool_result block so Claude can reason about retry, fallback, or escalation",
+      "C": "Crash the agent process to force a manual restart",
+      "D": "Retry the tool call indefinitely without back-off"
+    },
+    "answer": "B",
+    "explanation": "Errors must be visible to Claude so it can choose a recovery strategy. Option A corrupts Claude's world model and risks downstream wrong actions. Option C is brittle. Option D risks thundering-herd amplification."
+  },
+  {
+    "id": "human-in-loop-design-002",
+    "domain": "Tool Use / Agentic",
+    "stem": "A customer-support agent must escalate to humans appropriately. What is the most reliable escalation trigger?",
+    "choices": {
+      "A": "User sentiment classifier crosses a threshold of 0.8 'angry'",
+      "B": "The request falls outside the agent's defined policy scope or requires an action it lacks permission to perform",
+      "C": "Whenever the user mentions the word 'manager'",
+      "D": "Random sampling: escalate 10% of conversations"
+    },
+    "answer": "B",
+    "explanation": "Policy-gap escalation is deterministic and testable; sentiment-based escalation is unreliable as a sole trigger (frustrated users may have simple billing questions). Options A, C, and D are heuristics that produce both false positives and false negatives. Sentiment can be a secondary signal at best."
+  },
+  {
+    "id": "client-vs-server-tools-001",
+    "domain": "Tool Use / Agentic",
+    "stem": "What is the architectural difference between Anthropic's server tools (e.g., web_search) and client tools (e.g., user-defined functions)?",
+    "choices": {
+      "A": "Server tools execute on Anthropic's infrastructure and return results directly to Claude's reasoning; client tools execute in your application — Claude emits tool_use, your code runs it, you return tool_result",
+      "B": "Server tools have no rate limits and cost nothing",
+      "C": "Client tools are deprecated as of 2026",
+      "D": "Server tools require manual JSON schema authoring; client tools auto-generate schemas"
+    },
+    "answer": "A",
+    "explanation": "Server tools (web_search, code_execution, web_fetch, tool_search) run on Anthropic's side; client tools run on yours with the explicit tool_use/tool_result handshake. Option B is false. Option C is incorrect — client tools remain central. Option D inverts the schema-authoring story."
+  },
+  {
+    "id": "programmatic-tool-calling-001",
+    "domain": "Tool Use / Agentic",
+    "stem": "Programmatic Tool Calling (allowed_callers: ['code_execution_20260120']) is designed to address what challenge?",
+    "choices": {
+      "A": "Tool descriptions are too long",
+      "B": "Returning large or numerous tool results into Claude's context wastes tokens; programmatic tool calling lets Claude execute code in the sandbox that itself calls tools and processes the results, keeping intermediate volume out of the main context",
+      "C": "Schema validation is too slow",
+      "D": "Tools cannot accept JSON inputs"
+    },
+    "answer": "B",
+    "explanation": "Programmatic tool calling lets Claude write code that orchestrates many tool calls in the sandbox without all 50KB of line-item data flowing through context. Option A is unrelated. Option C is not the documented motivation. Option D is false."
+  },
+  {
+    "id": "subagent-context-isolation-001",
+    "domain": "Tool Use / Agentic",
+    "stem": "In Anthropic's recommended multi-agent architecture, subagents have isolated contexts. Why?",
+    "choices": {
+      "A": "Anthropic charges extra for shared context",
+      "B": "Isolated contexts prevent cross-task pollution, allow parallel work, and let each subagent use its full token budget on a focused subtask — but coordinators must therefore design explicit information passing",
+      "C": "Subagents are forbidden by Anthropic's terms of service from communicating",
+      "D": "Shared context is the only available option but slower"
+    },
+    "answer": "B",
+    "explanation": "Subagent isolation is a design choice for parallelism, focus, and context-budget efficiency; it requires the coordinator to deliberately pass relevant information. Option A is fictional. Option C overstates the TOS. Option D contradicts the documented architecture options."
+  },
+  {
+    "id": "batch-50pct-discount-001",
+    "domain": "API & Deployment",
+    "stem": "What is the documented discount on Message Batches API requests vs the standard synchronous Messages API?",
+    "choices": {
+      "A": "10% off both input and output tokens",
+      "B": "50% off both input and output tokens",
+      "C": "90% off input only",
+      "D": "Free for the first million tokens per month"
+    },
+    "answer": "B",
+    "explanation": "Anthropic documents a flat 50% discount on Batch API usage across input and output tokens. Option A understates. Option C confuses with the prompt-caching cache-read discount. Option D is a fictional credit."
+  },
+  {
+    "id": "batch-24h-window-001",
+    "domain": "API & Deployment",
+    "stem": "What is the SLA / completion-window guarantee for the Message Batches API?",
+    "choices": {
+      "A": "Real-time, with sub-second response",
+      "B": "Processed within up to 24 hours; no latency SLA guarantees within that window",
+      "C": "Synchronous and identical to the Messages API",
+      "D": "Always under 1 minute regardless of batch size"
+    },
+    "answer": "B",
+    "explanation": "Batches are asynchronous with up to a 24-hour processing window and no within-window latency guarantee. Option A confuses with Messages API. Options C and D contradict the Batch API's asynchronous nature."
+  },
+  {
+    "id": "prompt-cache-tiers-001",
+    "domain": "API & Deployment",
+    "stem": "Prompt caching is offered in which TTL tiers?",
+    "choices": {
+      "A": "1 minute and 10 minutes",
+      "B": "5 minutes (standard) and 1 hour (extended, at additional cost)",
+      "C": "24 hours and 7 days",
+      "D": "Permanent until manually invalidated"
+    },
+    "answer": "B",
+    "explanation": "Standard cache writes use a 5-minute TTL; extended writes use a 1-hour TTL at higher write cost. Option A understates. Option C overstates. Option D is incorrect — caches are time-bounded."
+  },
+  {
+    "id": "cache-write-multipliers-001",
+    "domain": "API & Deployment",
+    "stem": "Per Anthropic's documented pricing, what are the prompt-cache multipliers?",
+    "choices": {
+      "A": "Cache write 0.5x base, cache read 2x base",
+      "B": "5-min cache write 1.25x base, 1-hour cache write 2x base, cache read 0.1x base",
+      "C": "Cache write 5x base, cache read 0.001x base",
+      "D": "All multipliers are 1.0; caching is free"
+    },
+    "answer": "B",
+    "explanation": "These are the exact published multipliers — 5-min writes pay a 1.25x premium, 1-hour writes pay 2x, and hits read at 10% of base. Option A inverts directions. Option C exaggerates. Option D incorrectly states caching is free; cache writes incur a premium."
+  },
+  {
+    "id": "cache-min-token-threshold-002",
+    "domain": "API & Deployment",
+    "stem": "You add cache_control to a 400-token system prompt but never see cache_read_input_tokens. What is the most likely cause?",
+    "choices": {
+      "A": "Prompt caching has a minimum token threshold (typically 1024 for most current models); prompts shorter than that are not cached",
+      "B": "Cache reads only work for Haiku",
+      "C": "cache_control is deprecated in 2026",
+      "D": "Caching requires the Bedrock endpoint specifically"
+    },
+    "answer": "A",
+    "explanation": "Prompt caching does not cache prefixes below the model's minimum token threshold (~1024 tokens for most current models). Option B is false. Option C is false; caching is supported and widely used. Option D is incorrect — caching is supported across endpoints."
+  },
+  {
+    "id": "cache-batch-stack-001",
+    "domain": "API & Deployment",
+    "stem": "A nightly summarization job uses a 50,000-token shared system prompt across 10,000 batched requests. Which combination yields the lowest cost per request?",
+    "choices": {
+      "A": "Synchronous API with no caching",
+      "B": "Batches API alone",
+      "C": "Prompt caching on the shared prefix combined with the Batches API — discounts stack",
+      "D": "Use Haiku 3 to minimize per-token cost"
+    },
+    "answer": "C",
+    "explanation": "Prompt caching (up to ~90% off cached input) stacks with Batch (50% off everything). For a 50k repeated prefix this is a dramatic combined saving. Option A is the most expensive option. Option B captures only the batch discount. Option D ignores quality requirements and still doesn't capture caching."
+  },
+  {
+    "id": "sse-event-order-002",
+    "domain": "API & Deployment",
+    "stem": "Streaming a standard text response over SSE, in what order do these event types appear?",
+    "choices": {
+      "A": "message_stop → message_start → content_block_start → content_block_delta",
+      "B": "message_start → content_block_start → content_block_delta* → content_block_stop → message_delta → message_stop",
+      "C": "ping → message_complete (all content arrives in one event)",
+      "D": "There are no SSE events; only a single JSON response is returned"
+    },
+    "answer": "B",
+    "explanation": "The documented order is message_start → content_block_start → repeated content_block_delta → content_block_stop → message_delta → message_stop. Option A scrambles the sequence. Option C ignores the streaming contract entirely. Option D contradicts the SSE design."
+  },
+  {
+    "id": "token-counting-endpoint-002",
+    "domain": "API & Deployment",
+    "stem": "Which Anthropic API endpoint returns token counts without performing inference?",
+    "choices": {
+      "A": "POST /v1/messages with count_tokens: true in the body",
+      "B": "POST /v1/messages/count_tokens (a dedicated endpoint returning input token totals)",
+      "C": "GET /v1/models (returns token info per model)",
+      "D": "There is no such endpoint; count yourself with tiktoken"
+    },
+    "answer": "B",
+    "explanation": "Anthropic exposes a dedicated /v1/messages/count_tokens endpoint that uses the same request shape but returns token totals without invoking the model. Option A is not how the count parameter works. Option C returns model metadata, not per-request counts. Option D ignores the official endpoint and tiktoken is for OpenAI tokenizers, not Claude."
+  },
+  {
+    "id": "regional-endpoints-002",
+    "domain": "API & Deployment",
+    "stem": "An EU healthcare deployment must process all inference traffic within the EU for compliance. Which deployment configuration is required?",
+    "choices": {
+      "A": "Global endpoint with TLS encryption only",
+      "B": "Regional endpoint anchored to an EU region (via Bedrock EU, Vertex EU, or Azure EU) so request routing stays within that geography",
+      "C": "Default endpoint with VPN tunnel",
+      "D": "Any endpoint, because Anthropic guarantees EU residency in all cases"
+    },
+    "answer": "B",
+    "explanation": "Regional endpoints guarantee the data path stays in a specific geography — required for residency requirements. Option A doesn't constrain routing. Option C addresses encryption in transit, not residency. Option D overstates Anthropic's default routing guarantees."
+  },
+  {
+    "id": "rate-limit-strategy-002",
+    "domain": "API & Deployment",
+    "stem": "You hit 429 errors during peak traffic. Which combined strategy is most appropriate?",
+    "choices": {
+      "A": "Immediate retry without delay",
+      "B": "Exponential backoff with jitter, shift non-urgent work to the Batch API, and add request queuing to smooth spikes",
+      "C": "Buy more max_tokens",
+      "D": "Switch to Haiku because Haiku has no rate limits"
+    },
+    "answer": "B",
+    "explanation": "Backoff with jitter, batch offload, and queueing are the textbook combination. Option A worsens the thundering herd. Option C is unrelated to throughput limits. Option D is false — Haiku has rate limits too, just often higher."
+  },
+  {
+    "id": "workspace-cache-isolation-001",
+    "domain": "API & Deployment",
+    "stem": "As of February 5, 2026, Anthropic's prompt caching uses what isolation level on the Claude API?",
+    "choices": {
+      "A": "Workspace-level isolation — caches are not shared across workspaces in the same organization",
+      "B": "User-level isolation — every user has a separate cache",
+      "C": "Per-request isolation — caches don't persist across requests",
+      "D": "Global — caches are shared across all Anthropic customers"
+    },
+    "answer": "A",
+    "explanation": "Anthropic changed cache isolation to workspace-level on Feb 5, 2026 — within the Claude API, Claude Platform on AWS, and Microsoft Foundry (beta); Bedrock and Vertex AI remain at organization-level. Option B is incorrect. Option C contradicts the whole point of caching. Option D would be a privacy disaster and is false."
+  },
+  {
+    "id": "batch-custom-id-failure-001",
+    "domain": "API & Deployment",
+    "stem": "A 1,000-request batch completes with status 'ended.' 12 requests failed. How do you identify exactly which originals failed for resubmission?",
+    "choices": {
+      "A": "Re-run all 1,000 and diff the outputs",
+      "B": "Stream the results file and match each result's custom_id (set at submission time) to your tracking record; failed results contain an error object instead of a message",
+      "C": "Failed requests are automatically retried by the API",
+      "D": "Anthropic emails a CSV of failures"
+    },
+    "answer": "B",
+    "explanation": "custom_id is the documented correlation key. Failed results carry an error object. Option A is wasteful. Option C is wrong — the Batch API does not auto-retry user-level failures. Option D is fictional."
+  },
+  {
+    "id": "extended-output-batches-only-001",
+    "domain": "API & Deployment",
+    "stem": "Where is the 300k output-token extended limit available?",
+    "choices": {
+      "A": "On the synchronous Messages API for all models",
+      "B": "On the Message Batches API only, for Opus 4.7, Opus 4.6, and Sonnet 4.6, via the output-300k-2026-03-24 beta header",
+      "C": "On the Token Counting API",
+      "D": "On Bedrock and Vertex AI but not the Claude API"
+    },
+    "answer": "B",
+    "explanation": "Extended 300k output is documented as Batches-only, gated by the dated beta header, and supported on Opus 4.7, Opus 4.6, and Sonnet 4.6. Option A is wrong — synchronous caps remain 128k for Opus. Option C confuses an unrelated endpoint. Option D inverts platform support."
+  },
+  {
+    "id": "long-context-pricing-001",
+    "domain": "API & Deployment",
+    "stem": "On Claude Opus 4.6, when does the 'long-context' surcharge apply?",
+    "choices": {
+      "A": "When monthly aggregate usage exceeds 200,000 tokens",
+      "B": "Per-request — when a single request's input tokens exceed 200,000, both input and output prices for that request scale up (input doubles, output rises proportionally)",
+      "C": "When using PDFs of any size",
+      "D": "Only on weekends"
+    },
+    "answer": "B",
+    "explanation": "Long-context pricing is applied per-request when the input crosses the 200k threshold, not against monthly aggregates. Option A misreads the trigger. Option C is unrelated to file type. Option D is absurd."
+  },
+  {
+    "id": "cache-control-breakpoint-placement-001",
+    "domain": "API & Deployment",
+    "stem": "Where should cache_control breakpoints typically be placed for maximum cache hit rate?",
+    "choices": {
+      "A": "On the dynamic user turn only",
+      "B": "On the stable prefix (e.g., system prompt + reference docs + tool definitions) so the cached content is identical across requests",
+      "C": "On every individual content block",
+      "D": "Cache_control is unnecessary; caching is fully automatic on all models"
+    },
+    "answer": "B",
+    "explanation": "Caching keys off the prefix up to the cache_control breakpoint; placing it on stable content maximizes hits. Option A inverts the strategy — dynamic content changes, so it won't hit. Option C wastes write cost and creates churn. Option D overstates automatic caching, which is supported but explicit breakpoints maximize control."
+  },
+  {
+    "id": "haiku-pricing-2026-001",
+    "domain": "API & Deployment",
+    "stem": "What is the documented standard input/output price for Claude Haiku 4.5 in 2026?",
+    "choices": {
+      "A": "$0.25 / $1.25 per MTok",
+      "B": "$1.00 / $5.00 per MTok",
+      "C": "$3.00 / $15.00 per MTok",
+      "D": "$15.00 / $75.00 per MTok"
+    },
+    "answer": "B",
+    "explanation": "Haiku 4.5 is $1/$5 per MTok. Option A is Claude 3 Haiku pricing, outdated. Option C is Sonnet 4.6 pricing. Option D is Claude 3 Opus pricing, also outdated for current architecture."
+  },
+  {
+    "id": "sync-vs-batch-decision-001",
+    "domain": "API & Deployment",
+    "stem": "A blocking pre-merge code review must complete within 90 seconds before allowing the merge. Which API approach fits?",
+    "choices": {
+      "A": "Message Batches API",
+      "B": "Synchronous Messages API (streaming if desired)",
+      "C": "Schedule for next night's batch run",
+      "D": "Token Counting API"
+    },
+    "answer": "B",
+    "explanation": "Blocking, latency-sensitive workflows must use the synchronous Messages API. Option A is async, up to 24h. Option C abandons the SLA. Option D doesn't perform inference."
+  },
+  {
+    "id": "context-history-management-002",
+    "domain": "API & Deployment",
+    "stem": "A chatbot passes full history every turn and now costs 10x at 60 turns. Best fix?",
+    "choices": {
+      "A": "Raise max_tokens to give Claude more room",
+      "B": "Implement sliding window, progressive summarization, or server-side compaction (on supporting models) to bound context growth",
+      "C": "Increase temperature for shorter answers",
+      "D": "Switch to a larger model so it can absorb the cost"
+    },
+    "answer": "B",
+    "explanation": "The fix is bounding context — sliding windows, progressive summaries, or compaction (Opus 4.6+, Sonnet 4.6) keep per-turn cost flat. Option A doesn't shrink input. Option C is unrelated. Option D is more expensive per token, not cheaper."
+  },
+  {
+    "id": "cache-extended-1hr-tradeoff-001",
+    "domain": "API & Deployment",
+    "stem": "When is the 1-hour extended cache TTL worth its 2x write premium over the 5-minute standard TTL?",
+    "choices": {
+      "A": "When you call once per day",
+      "B": "When request arrival is bursty but spans 6–30 minutes between hits — the 1-hour TTL keeps the cache warm across gaps that would expire the 5-minute cache, recouping the 2x write cost via more hits",
+      "C": "Never; the standard 5-minute is always cheaper",
+      "D": "Only for Haiku models; extended TTL is not supported elsewhere"
+    },
+    "answer": "B",
+    "explanation": "1-hour writes recoup their 2x premium when arrival patterns straddle the 5-minute window — bursty mid-frequency workloads. Option A is once-per-day; neither cache TTL helps. Option C ignores hit-rate math. Option D is false — extended TTL is broadly supported."
+  },
+  {
+    "id": "batch-multi-turn-tool-001",
+    "domain": "API & Deployment",
+    "stem": "Why is the Message Batches API NOT suitable for multi-turn tool-use workflows?",
+    "choices": {
+      "A": "Batches don't support tool definitions at all",
+      "B": "Each batch request is processed as a single completion; the Batches API cannot pause mid-request to execute a client tool and resume — multi-turn tool use must be orchestrated synchronously in your code",
+      "C": "Batches reject tool_use blocks with a 400 error",
+      "D": "Batches automatically execute every tool internally"
+    },
+    "answer": "B",
+    "explanation": "Per the CCA materials and Anthropic docs, the Batch API doesn't support multi-turn tool calling within a single request. Option A is incorrect — tool definitions are accepted. Option C is fictional. Option D contradicts the client-tool execution model."
   }
 ]

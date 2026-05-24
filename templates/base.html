@@ -10,6 +10,14 @@
   <header>
     <nav>
       <a href="{{ url_for('quiz.index') }}" class="brand">Claude Quiz</a>
+      {% if live_stats.answered > 0 %}
+        <span class="nav-score">
+          {{ live_stats.correct }} / {{ live_stats.answered }}
+          <span class="nav-score-label">correct</span>
+          {% set pct = (live_stats.correct / live_stats.answered * 100) | round | int %}
+          <span class="nav-score-pct">({{ pct }}%)</span>
+        </span>
+      {% endif %}
       <a href="{{ url_for('quiz.index') }}?restart=1" class="restart-link">Restart</a>
     </nav>
   </header>

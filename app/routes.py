@@ -15,6 +15,14 @@ from app.quiz import get_question, next_unanswered, record_answer, score_session
 bp = Blueprint("quiz", __name__)
 
 
+@bp.app_context_processor
+def inject_live_stats() -> dict:
+    answers: dict[str, str] = session.get("answers", {})
+    questions = current_app.config.get("QUESTIONS", [])
+    correct = sum(1 for q in questions if answers.get(q.id) == q.answer)
+    return {"live_stats": {"correct": correct, "answered": len(answers)}}
+
+
 def _questions():
     return current_app.config["QUESTIONS"]
 
@@ -28,13 +36,24 @@ def index():
 
 @bp.get("/question/<qid>")
 def question(qid: str):
+    questions = _questions()
     try:
-        q = get_question(qid, _questions())
+        q = get_question(qid, questions)
     except QuizError:
         flash("Question not found.", "error")
         return redirect(url_for("quiz.index"))
     answered = session.get("answers", {})
-    return render_template("question.html", question=q, answered=answered)
+    q_number = next((i + 1 for i, item in enumerate(questions) if item.id == qid), 1)
+    total = len(questions)
+    remaining = total - len(answered)
+    return render_template(
+        "question.html",
+        question=q,
+        answered=answered,
+        q_number=q_number,
+        total=total,
+        remaining=remaining,
+    )
 
 
 @bp.post("/question/<qid>")
@@ -54,16 +73,28 @@ def submit_answer(qid: str):
 
 @bp.get("/answer/<qid>")
 def answer(qid: str):
+    questions = _questions()
     try:
-        q = get_question(qid, _questions())
+        q = get_question(qid, questions)
     except QuizError:
         flash("Question not found.", "error")
         return redirect(url_for("quiz.index"))
     chosen = session.get("answers", {}).get(qid)
     if chosen is None:
         return redirect(url_for("quiz.question", qid=qid))
-    nxt = next_unanswered(session, _questions())
-    return render_template("answer.html", question=q, chosen=chosen, next_question=nxt)
+    nxt = next_unanswered(session, questions)
+    q_number = next((i + 1 for i, item in enumerate(questions) if item.id == qid), 1)
+    total = len(questions)
+    remaining = total - len(session.get("answers", {}))
+    return render_template(
+        "answer.html",
+        question=q,
+        chosen=chosen,
+        next_question=nxt,
+        q_number=q_number,
+        total=total,
+        remaining=remaining,
+    )
 
 
 @bp.get("/results")
