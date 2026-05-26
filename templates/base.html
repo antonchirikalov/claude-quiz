@@ -18,7 +18,9 @@
           <span class="nav-score-pct">({{ pct }}%)</span>
         </span>
       {% endif %}
+      {% if quiz_active %}
       <a href="{{ url_for('quiz.index') }}?restart=1" class="restart-link">Restart</a>
+      {% endif %}
     </nav>
   </header>
 

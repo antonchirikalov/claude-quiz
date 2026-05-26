@@ -6,6 +6,27 @@ from app.errors import QuizError, SchemaError
 from app.schema import Question, validate_question
 
 _DATA_PATH = pathlib.Path(__file__).parent.parent / "data" / "questions.json"
+_EXAMS_DIR = pathlib.Path(__file__).parent.parent / "exams"
+
+
+def list_exams() -> list[str]:
+    """Return sorted list of exam folder names under exams/."""
+    if not _EXAMS_DIR.exists():
+        return []
+    return sorted(p.name for p in _EXAMS_DIR.iterdir() if p.is_dir())
+
+
+def list_question_files(exam: str) -> list[str]:
+    """Return sorted list of .json filenames in an exam folder."""
+    exam_dir = _EXAMS_DIR / exam
+    if not exam_dir.exists():
+        return []
+    return sorted(p.name for p in exam_dir.glob("*.json"))
+
+
+def questions_path(exam: str, filename: str) -> pathlib.Path:
+    """Return the absolute path for a given exam/filename pair."""
+    return _EXAMS_DIR / exam / filename
 
 
 def load_questions(path: pathlib.Path = _DATA_PATH) -> list[Question]:

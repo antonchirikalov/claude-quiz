@@ -7,7 +7,7 @@ def test_index_returns_200(client):
 def test_index_restart_clears_session(client):
     with client.session_transaction() as sess:
         sess["answers"] = {"test-q-001": "A"}
-    resp = client.get("/?restart=1")
+    resp = client.get("/?restart=1", follow_redirects=True)
     assert resp.status_code == 200
     with client.session_transaction() as sess:
         assert sess.get("answers") is None or sess.get("answers") == {}

@@ -2,25 +2,64 @@
 {% block title %}Welcome — Claude Quiz{% endblock %}
 
 {% block content %}
-<section class="hero">
-  <h1>Claude Certified Architect Practice Exam</h1>
-  <p>Test your knowledge across {{ questions | length }} questions covering model capabilities,
-     prompt engineering, safety, tool use, and API deployment.</p>
 
-  {% set first = questions[0] if questions else none %}
-  {% if first %}
-    <a href="{{ url_for('quiz.question', qid=first.id) }}" class="btn btn-primary">Start Quiz</a>
-  {% else %}
-    <p class="empty-state">No questions found. Add questions to <code>data/questions.json</code>.</p>
-  {% endif %}
-</section>
+{% if mode == "select_exam" %}
+  <section class="hero">
+    <h1>Select Exam</h1>
+    <p>Choose the exam you want to practice:</p>
+    {% if exams %}
+      <ul class="exam-list">
+        {% for exam in exams %}
+          <li>
+            <a href="{{ url_for('quiz.index', exam=exam) }}" class="btn btn-primary exam-btn">
+              {{ exam | replace('-', ' ') | title }}
+            </a>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="empty-state">No exams found. Add exam folders to the <code>exams/</code> directory.</p>
+    {% endif %}
+  </section>
 
-<section class="domains">
-  <h2>Domains covered</h2>
-  <ul>
-    {% for q in questions %}
-      <li><span class="domain-tag">{{ q.domain }}</span> {{ q.stem[:80] }}…</li>
-    {% endfor %}
-  </ul>
-</section>
+{% elif mode == "select_file" %}
+  <section class="hero">
+    <h1>{{ exam | replace('-', ' ') | title }}</h1>
+    <p>Select a question set to practice:</p>
+    <form method="post" action="{{ url_for('quiz.select') }}" class="file-select-form">
+      <input type="hidden" name="exam" value="{{ exam }}">
+      {% for f in files %}
+        <button type="submit" name="file" value="{{ f }}" class="btn btn-primary exam-btn">
+          {{ f | replace('.json', '') | replace('-', ' ') | title }}
+        </button>
+      {% endfor %}
+    </form>
+    <a href="{{ url_for('quiz.index') }}" class="btn btn-secondary back-btn">← Back</a>
+  </section>
+
+{% elif mode == "quiz" %}
+  <section class="hero">
+    <h1>Claude Certified Architect Practice Exam</h1>
+    <p>Test your knowledge across {{ questions | length }} questions covering model capabilities,
+       prompt engineering, safety, tool use, and API deployment.</p>
+
+    {% set first = questions[0] if questions else none %}
+    {% if first %}
+      <a href="{{ url_for('quiz.question', qid=first.id) }}" class="btn btn-primary">Start Quiz</a>
+    {% else %}
+      <p class="empty-state">No questions found in this file.</p>
+    {% endif %}
+  </section>
+
+  <section class="domains">
+    <h2>Domains covered</h2>
+    <ul>
+      {% for q in questions %}
+        <li><span class="domain-tag">{{ q.domain }}</span> {{ q.stem[:80] }}…</li>
+      {% endfor %}
+    </ul>
+  </section>
+
+{% endif %}
+
 {% endblock %}

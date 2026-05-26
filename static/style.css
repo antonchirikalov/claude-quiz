@@ -74,6 +74,14 @@ footer {
 }
 .btn-primary { background: #3b82f6; color: #fff; }
 .btn-primary:hover { background: #2563eb; }
+.btn-secondary { background: #e5e7eb; color: #374151; margin-top: 1rem; }
+.btn-secondary:hover { background: #d1d5db; }
+
+/* Exam / file selector */
+.exam-list { list-style: none; display: flex; flex-direction: column; gap: 0.75rem; align-items: center; }
+.exam-btn { min-width: 260px; text-align: center; }
+.file-select-form { display: flex; flex-direction: column; gap: 0.75rem; align-items: center; }
+.back-btn { display: inline-block; }
 
 /* Hero */
 .hero { text-align: center; padding: 2rem 0; }
