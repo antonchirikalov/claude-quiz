@@ -3,6 +3,26 @@
 Конвейер из 8 фаз, который берёт название экзамена и выдаёт готовый JSON-файл с вопросами для квиза.
 Каждая фаза делает одно конкретное дело и передаёт результат следующей.
 
+## Требования
+
+- **Tavily API key** — агенты ищут информацию в интернете через [Tavily](https://tavily.com/).  
+  Получить ключ: https://app.tavily.com → API Keys → Create API Key.  
+  Добавить в переменную окружения: `TAVILY_API_KEY=tvly-...`
+
+- **Tavily MCP server** — агентам нужен MCP-сервер Tavily для доступа к инструментам поиска (`tavily_search`, `tavily_extract`).  
+  Настройка для VS Code (`.vscode/mcp.json`) или Claude Code (`.mcp.json`):
+  ```json
+  {
+    "servers": {
+      "tavily-remote": {
+        "type": "http",
+        "url": "https://mcp.tavily.com/mcp/",
+        "headers": { "Authorization": "Bearer ${TAVILY_API_KEY}" }
+      }
+    }
+  }
+  ```
+
 ```
 Название экзамена
       ↓
