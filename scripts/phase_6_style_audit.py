@@ -28,7 +28,7 @@ def audit_question(q: dict, anchor: dict) -> dict:
     issues: list[str] = []
 
     stem_wc = word_count(q.get("stem", ""))
-    stem_lo = anchor.get("stem_words_p10", 34) * 0.7
+    stem_lo = anchor.get("stem_words_min", anchor.get("stem_words_p10", 34) * 0.7)
     stem_hi = anchor.get("stem_words_p90", 77) * 1.4
     if stem_wc < stem_lo or stem_wc > stem_hi:
         issues.append(
@@ -37,8 +37,9 @@ def audit_question(q: dict, anchor: dict) -> dict:
         )
 
     expl_wc = word_count(q.get("explanation", ""))
-    expl_lo = anchor.get("explanation_words_p10", 42) * 0.5
-    expl_hi = anchor.get("explanation_words_p90", 119) * 1.5
+    # Fall back to defaults when corpus had no explanations (anchor value is 0)
+    expl_lo = (anchor.get("explanation_words_p10") or 42) * 0.5
+    expl_hi = (anchor.get("explanation_words_p90") or 119) * 1.5
     if expl_wc < expl_lo or expl_wc > expl_hi:
         issues.append(
             f"explanation length {expl_wc} words outside expected range "

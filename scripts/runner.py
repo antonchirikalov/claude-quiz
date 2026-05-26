@@ -12,6 +12,7 @@ import re
 import subprocess
 import sys
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 from pathlib import Path
 
@@ -240,8 +241,10 @@ Write exactly ONE multiple-choice question for a professional certification exam
 | Domain | {row["domain"]} ({row["domain_id"]}) |
 | Subdomain | {row.get("subdomain_id", "")} |
 | Topic hint | {row.get("topic_hint", "")} |
-| Scenario ID | {row.get("scenario_id", "")} |
-| Anti-pattern to embed in a wrong answer | {row.get("anti_pattern_id", "")} |
+| Scenario context | {_SCENARIO_CONTEXTS.get(row.get("scenario_id", ""), "A practitioner using Claude in a production system.")} |
+| Anti-pattern to embed (ID) | {row.get("anti_pattern_id", "")} |
+| Anti-pattern description | {row.get("_anti_pattern_description", "")} |
+| Target correct letter | **{row.get("_target_letter", "A")}** |
 | Difficulty | {row.get("difficulty", "medium")} |
 | Stem format | {row.get("stem_format", "which_approach")} |
 
@@ -276,10 +279,11 @@ Test **APPLICATION or ANALYSIS** (Bloom levels 3–4).
 
 1. Search `docs.anthropic.com` via Tavily for: `{row.get("topic_hint", row.get("domain", ""))}`
 2. Identify one specific documented fact or quote to use as a source anchor.
-3. Write the question. The correct answer must be unambiguously supported by the documentation.
-4. Ensure the wrong answers are plausible but clearly wrong on reflection.
-5. One wrong answer must reflect anti-pattern: `{row.get("anti_pattern_id", "")}`
-6. Write the output JSON to: `{output_path}`
+3. Write the stem. **Open with 2–3 sentences of production scenario** matching the assigned scenario context. Target 33–77 words in the stem total.
+4. The correct answer must be unambiguously supported by the documentation. Place it at choice **{row.get("_target_letter", "A")}**.
+5. Ensure the wrong answers are plausible but clearly wrong on reflection.
+6. One wrong answer must reflect this anti-pattern: `{row.get("anti_pattern_id", "")}` — {row.get("_anti_pattern_description", "")}
+7. Write the output JSON to: `{output_path}`
 
 ## Question ID
 
@@ -299,7 +303,7 @@ Write this JSON object to `{output_path}`:
   "anti_pattern_in_distractor": "{row.get("anti_pattern_id", "")}",
   "stem": "...",
   "choices": {{"A": "...", "B": "...", "C": "...", "D": "..."}},
-  "answer": "C",
+  "answer": "{row.get('_target_letter', 'A')}",
   "explanation": "...",
   "sources": [
     {{
@@ -353,6 +357,7 @@ Check for these defects:
 - Does the stem hint at the answer? (stem clue)
 - Is this testing recall rather than understanding or application?
 - Is the explanation incomplete or incorrect?
+- Does the stem actually test subdomain **{q.get("subdomain_id", "")}**? If the question clearly tests a different subdomain, add "subdomain_mismatch" to issues.
 
 ### Step 3 — Assign flag
 
@@ -387,11 +392,22 @@ Write this JSON to: `{result_path}`
 # ---------------------------------------------------------------------------
 
 
+# Scenario opening contexts for the 6 CCA exam personas.
+_SCENARIO_CONTEXTS: dict[str, str] = {
+    "S1": "A customer support agent handles inbound user tickets.",
+    "S2": "An AI coding assistant generates and reviews software code.",
+    "S3": "A research pipeline processes documents and extracts insights.",
+    "S4": "A multi-step agentic workflow runs autonomously end-to-end.",
+    "S5": "A content moderation system reviews user-generated material.",
+    "S6": "A structured data extraction pipeline converts documents to JSON.",
+}
+
 # Hardcoded anchor defaults used when no seed questions are available.
 # Derived from the Claude certification question set (May 2026).
 _DEFAULT_ANCHOR: dict = {
     "stem_words_p10": 34,
     "stem_words_p90": 77,
+    "stem_words_min": 33,
     "choices_count_mode": 4,
     "choice_length_ratio_mean": 1.8,
     "choice_length_ratio_p90": 2.6,
@@ -529,6 +545,14 @@ def phase_1(
     discovered_subdomains: list = data.get("discovered_subdomains", [])
     forum_signals: dict = {"signals": signals, "discovered_subdomains": discovered_subdomains}
 
+    domains = exam_meta.get("domains", [])
+    total_weight = sum(d.get("weight", 0) for d in domains)
+    if domains and abs(total_weight - 1.0) > 0.01:
+        logger.warning(
+            f"Phase 1: domain weights sum to {total_weight:.3f} (expected 1.0) — "
+            "distribution may be skewed"
+        )
+
     (artifacts_dir / "exam_meta.json").write_text(
         json.dumps(exam_meta, indent=2, ensure_ascii=False), encoding="utf-8"
     )
@@ -583,9 +607,12 @@ def phase_3(
     prompts_dir: Path,
     matrix: list[dict],
     anchor_path: Path,
+    max_workers: int = 5,
 ) -> Path:
     """Run question-writer agents, one per coverage matrix row."""
-    logger.info(f"Phase 3 start — question-writer ({len(matrix)} questions)")
+    logger.info(
+        f"Phase 3 start — question-writer ({len(matrix)} questions, workers={max_workers})"
+    )
 
     anchor: dict = json.loads(anchor_path.read_text(encoding="utf-8"))
     # Each agent writes to its own file; runner assembles into JSONL afterwards.
@@ -593,8 +620,24 @@ def phase_3(
     raw_dir.mkdir(exist_ok=True)
     today = datetime.now().strftime("%Y-%m-%d")
 
-    skipped = 0
-    for row in matrix:
+    # Enrich rows with anti-pattern descriptions and balanced target letters
+    _exam_meta_path = artifacts_dir / "exam_meta.json"
+    _ap_map: dict[str, str] = {}
+    if _exam_meta_path.exists():
+        try:
+            _em = json.loads(_exam_meta_path.read_text(encoding="utf-8"))
+            _ap_map = {
+                ap["id"]: ap.get("description", ap.get("label", ""))
+                for ap in _em.get("anti_patterns", [])
+            }
+        except (json.JSONDecodeError, KeyError):
+            pass
+    _letters = ["A", "B", "C", "D"]
+    for _i, _row in enumerate(matrix):
+        _row["_target_letter"] = _letters[_i % 4]
+        _row["_anti_pattern_description"] = _ap_map.get(_row.get("anti_pattern_id", ""), "")
+
+    def _write_row(row: dict) -> bool:
         row_id = row["row_id"]
         output_path = raw_dir / f"q_{row_id}.json"
         task_path = prompts_dir / f"writer_task_{row_id}.md"
@@ -604,7 +647,7 @@ def phase_3(
             re.sub(r"[^a-z0-9]+", "-", row.get("topic_hint", row_id).lower())
             .strip("-")[:40]
         )
-        proposed_id = f"{domain_abbr}-{topic_slug}"
+        proposed_id = f"{domain_abbr}-{topic_slug}-{row_id}"
 
         task_path.write_text(
             build_writer_task(row, proposed_id, output_path, anchor, today),
@@ -627,14 +670,24 @@ def phase_3(
             label=f"row={row_id}",
         )
         if result is None:
-            skipped += 1
-            continue
-
+            return False
         if not output_path.exists():
             logger.warning(
                 f"Phase 3 row={row_id}: output file not created by agent, skipping"
             )
-            skipped += 1
+            return False
+        return True
+
+    skipped = 0
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        futures = {executor.submit(_write_row, row): row["row_id"] for row in matrix}
+        for future in as_completed(futures):
+            try:
+                if not future.result():
+                    skipped += 1
+            except Exception as exc:
+                logger.error(f"Phase 3 row={futures[future]}: unexpected error: {exc}")
+                skipped += 1
 
     # Assemble questions_raw.jsonl
     raw_path = artifacts_dir / "questions_raw.jsonl"
@@ -658,6 +711,7 @@ def phase_4(
     artifacts_dir: Path,
     prompts_dir: Path,
     raw_path: Path,
+    max_workers: int = 5,
 ) -> dict[str, dict]:
     """Run adversarial-reviewer agents, one per question."""
     logger.info("Phase 4 start — adversarial-reviewer")
@@ -671,8 +725,7 @@ def phase_4(
         if line.strip()
     ]
 
-    skipped = 0
-    for q in questions:
+    def _review_question(q: dict) -> bool:
         qid = q["id"]
         result_path = adversarial_dir / f"adversarial_result_{qid}.json"
         task_path = prompts_dir / f"reviewer_task_{qid}.md"
@@ -695,12 +748,22 @@ def phase_4(
             label=f"q={qid}",
         )
         if result is None:
-            skipped += 1
-            continue
-
+            return False
         if not result_path.exists():
             logger.warning(f"Phase 4 q={qid}: result file not created by agent")
-            skipped += 1
+            return False
+        return True
+
+    skipped = 0
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        futures = {executor.submit(_review_question, q): q["id"] for q in questions}
+        for future in as_completed(futures):
+            try:
+                if not future.result():
+                    skipped += 1
+            except Exception as exc:
+                logger.error(f"Phase 4 q={futures[future]}: unexpected error: {exc}")
+                skipped += 1
 
     # Assemble adversarial_report.json from per-question files
     report: list[dict] = []
@@ -789,6 +852,7 @@ def phase_7(
     anchor_index: dict[str, dict],
     style_index: dict[str, dict],
     target_n: int,
+    prior_questions_path: Path | None = None,
 ) -> Path:
     """Assemble final questions JSON (Phase 7)."""
     logger.info("Phase 7 start — assembly")
@@ -817,12 +881,36 @@ def phase_7(
         except (json.JSONDecodeError, TypeError):
             pass
 
+    # Load prior published questions for cross-session dedup
+    if prior_questions_path is not None and prior_questions_path.exists():
+        try:
+            prior = json.loads(prior_questions_path.read_text(encoding="utf-8"))
+            prior_stems = [
+                stem_words(q.get("stem", ""))
+                for q in prior
+                if isinstance(q, dict)
+            ]
+            practice_stem_sets.extend(prior_stems)
+            logger.info(
+                f"Phase 7: loaded {len(prior_stems)} prior published questions for dedup"
+            )
+        except (json.JSONDecodeError, TypeError) as exc:
+            logger.warning(f"Phase 7: cannot read prior questions: {exc}")
+
     counts = {"bug": 0, "not_found": 0, "style_fail": 0, "dedup": 0, "schema_error": 0}
     accepted: list[dict] = []
+    seen_ids: set[str] = set()
     seen_stem_sets: list[set[str]] = []
 
     for q in questions_raw:
         qid = q.get("id", "unknown")
+
+        # Step 1a: check ID uniqueness
+        if qid in seen_ids:
+            counts["schema_error"] += 1
+            logger.warning(f"Rejected {qid}: duplicate id (add row_id suffix to fix)")
+            continue
+        seen_ids.add(qid)
 
         # Step 2: filter bugs
         adv = adversarial_index.get(qid, {})
@@ -964,6 +1052,7 @@ def main() -> None:
     anchor_index = phase_5(artifacts_dir)
     style_index = phase_6(artifacts_dir)
 
+    prior_questions_path = PROJECT_ROOT / "exams" / slug / "questions.json"
     output_path = phase_7(
         artifacts_dir,
         run_dir,
@@ -972,6 +1061,7 @@ def main() -> None:
         anchor_index,
         style_index,
         questions_target,
+        prior_questions_path if prior_questions_path.exists() else None,
     )
 
     logger.info(
