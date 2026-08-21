@@ -10,20 +10,39 @@
     <div class="score-fraction">{{ score.correct }} / {{ score.total }} correct</div>
   </div>
 
+  {% if score.by_domain %}
+    <h2>Score by Domain</h2>
+    <table class="domain-table">
+      <thead>
+        <tr><th>Domain</th><th>Correct</th><th>%</th></tr>
+      </thead>
+      <tbody>
+        {% for name, stats in score.by_domain.items() %}
+          <tr class="{% if stats.pct < 70 %}domain-weak{% endif %}">
+            <td>{{ name }}</td>
+            <td class="domain-count">{{ stats.correct }} / {{ stats.total }}</td>
+            <td class="domain-count">{{ stats.pct }}%</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <p class="domain-note">Anything under 70% in a domain is worth a second pass through the theory.</p>
+  {% endif %}
+
   <h2>Question Breakdown</h2>
   <ol class="breakdown">
     {% for item in score.breakdown %}
       <li class="breakdown-item {% if item.correct %}item-correct{% else %}item-wrong{% endif %}">
         <span class="domain-tag">{{ item.question.domain }}</span>
-        <p class="stem">{{ item.question.stem }}</p>
+        <p class="stem">{{ item.question.stem | md_inline }}</p>
         <p class="breakdown-answer">
-          Your answer: <strong>{{ item.chosen or '—' }}</strong>
+          Your answer: <strong>{{ item.chosen | join(', ') or '—' }}</strong>
           {% if not item.correct %}
             | Correct: <strong>{{ item.question.answer }}</strong>
           {% endif %}
           {% if item.correct %}✓{% else %}✗{% endif %}
         </p>
-        <p class="explanation-small">{{ item.question.explanation }}</p>
+        <div class="explanation-small">{{ item.question.explanation | md }}</div>
       </li>
     {% endfor %}
   </ol>

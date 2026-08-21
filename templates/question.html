@@ -8,7 +8,19 @@
     <span class="question-progress">Question {{ q_number }} of {{ total }} &mdash; {{ remaining }} remaining</span>
   </header>
 
-  <p class="stem">{{ question.stem }}</p>
+  {% if question.scenario %}
+    <details class="scenario" {% if opens_scenario %}open{% endif %}>
+      <summary>{{ question.scenario_title or 'Scenario' }}</summary>
+      <div class="scenario-body">{{ question.scenario | md }}</div>
+    </details>
+  {% endif %}
+
+  <p class="stem">{{ question.stem | md_inline }}</p>
+
+  {% if question.is_multi %}
+    <p class="multi-hint">Multiple response — select exactly {{ question.answers | length }}.
+      Partial selections score zero.</p>
+  {% endif %}
 
   {% if question.id in answered %}
     <p class="already-answered">You already answered this question.
@@ -20,9 +32,13 @@
         <legend class="sr-only">Select your answer</legend>
         {% for key, text in question.choices.items() %}
           <label class="choice-label">
-            <input type="radio" name="choice" value="{{ key }}" required>
+            {% if question.is_multi %}
+              <input type="checkbox" name="choice" value="{{ key }}">
+            {% else %}
+              <input type="radio" name="choice" value="{{ key }}" required>
+            {% endif %}
             <span class="choice-key">{{ key }}</span>
-            <span class="choice-text">{{ text }}</span>
+            <span class="choice-text">{{ text | md_inline }}</span>
           </label>
         {% endfor %}
       </fieldset>
@@ -30,4 +46,6 @@
     </form>
   {% endif %}
 </article>
+
+{% include "_nav.html" %}
 {% endblock %}

@@ -12,10 +12,14 @@ from flask import (
 
 from app.errors import QuizError
 from app.quiz import (
+    domain_counts,
+    get_answers,
     get_question,
     list_exams,
     list_question_files,
     load_questions,
+    nav_groups,
+    neighbours,
     next_unanswered,
     questions_path,
     record_answer,
@@ -23,6 +27,18 @@ from app.quiz import (
 )
 
 bp = Blueprint("quiz", __name__)
+
+
+def _opens_scenario(question, questions: list) -> bool:
+    """True on the first question of a scenario block.
+
+    The scenario is shared context for a whole block of questions, so it only
+    needs reading once — later questions in the block get it collapsed.
+    """
+    if not question.scenario:
+        return False
+    index = questions.index(question)
+    return index == 0 or questions[index - 1].scenario != question.scenario
 
 
 def _questions() -> list:
@@ -48,9 +64,9 @@ def _questions() -> list:
 
 @bp.app_context_processor
 def inject_live_stats() -> dict:
-    answers: dict[str, str] = session.get("answers", {})
+    answers = get_answers(session)
     questions = _questions()
-    correct = sum(1 for q in questions if answers.get(q.id) == q.answer)
+    correct = sum(1 for q in questions if q.is_correct(answers.get(q.id)))
     answered = sum(1 for q in questions if q.id in answers)
     quiz_active = (
         "QUESTIONS" in current_app.config
@@ -71,12 +87,18 @@ def index():
     questions = _questions()
 
     # Test mode: QUESTIONS injected directly into config → go straight to quiz UI
-    if "QUESTIONS" in current_app.config:
-        return render_template("index.html", mode="quiz", questions=questions)
-
-    # Production: exam + file already chosen
-    if session.get("exam") and session.get("file"):
-        return render_template("index.html", mode="quiz", questions=questions)
+    # Production path is the same view once an exam + file have been chosen.
+    if "QUESTIONS" in current_app.config or (session.get("exam") and session.get("file")):
+        return render_template(
+            "index.html",
+            mode="quiz",
+            questions=questions,
+            domains=domain_counts(questions),
+            multi_count=sum(1 for q in questions if q.is_multi),
+            exam=session.get("exam"),
+            file=session.get("file"),
+            answered=get_answers(session),
+        )
 
     # Step 2: exam chosen via query param → show file list
     exam = request.args.get("exam", "").strip()
@@ -116,18 +138,21 @@ def question(qid: str):
     except QuizError:
         flash("Question not found.", "error")
         return redirect(url_for("quiz.index"))
-    answered = session.get("answers", {})
+    answered = get_answers(session)
     total = len(questions)
-    answered_count = sum(1 for q in questions if q.id in answered)
-    remaining = total - answered_count
-    q_number = answered_count + 1
+    remaining = total - sum(1 for item in questions if item.id in answered)
+    previous_question, next_in_order = neighbours(questions, q)
     return render_template(
         "question.html",
         question=q,
         answered=answered,
-        q_number=q_number,
+        q_number=questions.index(q) + 1,
         total=total,
         remaining=remaining,
+        opens_scenario=_opens_scenario(q, questions),
+        nav=nav_groups(questions, answered, current_id=q.id),
+        previous_question=previous_question,
+        next_in_order=next_in_order,
     )
 
 
@@ -138,11 +163,18 @@ def submit_answer(qid: str):
     except QuizError:
         flash("Question not found.", "error")
         return redirect(url_for("quiz.index"))
-    choice = request.form.get("choice", "").strip()
-    if choice not in q.choices:
+    chosen = [c.strip() for c in request.form.getlist("choice") if c.strip()]
+    if not chosen or any(c not in q.choices for c in chosen):
         flash("Please select a valid answer.", "warning")
         return redirect(url_for("quiz.question", qid=qid))
-    record_answer(session, qid, choice)
+    expected = len(q.answers)
+    if len(set(chosen)) != expected:
+        flash(
+            f"This question requires exactly {expected} selections — you made {len(set(chosen))}.",
+            "warning",
+        )
+        return redirect(url_for("quiz.question", qid=qid))
+    record_answer(session, qid, sorted(set(chosen)))
     return redirect(url_for("quiz.answer", qid=qid))
 
 
@@ -154,22 +186,26 @@ def answer(qid: str):
     except QuizError:
         flash("Question not found.", "error")
         return redirect(url_for("quiz.index"))
-    chosen = session.get("answers", {}).get(qid)
+    answered = get_answers(session)
+    chosen = answered.get(qid)
     if chosen is None:
         return redirect(url_for("quiz.question", qid=qid))
     nxt = next_unanswered(session, questions)
-    answered_map = session.get("answers", {})
     total = len(questions)
-    q_number = sum(1 for q in questions if q.id in answered_map)
-    remaining = total - q_number
+    remaining = total - sum(1 for item in questions if item.id in answered)
+    previous_question, next_in_order = neighbours(questions, q)
     return render_template(
         "answer.html",
         question=q,
+        answered=answered,
         chosen=chosen,
         next_question=nxt,
-        q_number=q_number,
+        q_number=questions.index(q) + 1,
         total=total,
         remaining=remaining,
+        nav=nav_groups(questions, answered, current_id=q.id),
+        previous_question=previous_question,
+        next_in_order=next_in_order,
     )
 
 

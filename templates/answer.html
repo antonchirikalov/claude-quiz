@@ -8,33 +8,68 @@
     <span class="question-progress">Question {{ q_number }} of {{ total }} &mdash; {{ remaining }} remaining</span>
   </header>
 
-  <p class="stem">{{ question.stem }}</p>
+  {% if question.scenario %}
+    <details class="scenario">
+      <summary>{{ question.scenario_title or 'Scenario' }}</summary>
+      <div class="scenario-body">{{ question.scenario | md }}</div>
+    </details>
+  {% endif %}
+
+  <p class="stem">{{ question.stem | md_inline }}</p>
 
   <div class="choices-review">
     {% for key, text in question.choices.items() %}
       <div class="choice-row
-        {% if key == question.answer %}correct-answer{% endif %}
-        {% if key == chosen and chosen != question.answer %}wrong-answer{% endif %}">
+        {% if key in question.answers %}correct-answer{% endif %}
+        {% if key in chosen and key not in question.answers %}wrong-answer{% endif %}">
         <span class="choice-key">{{ key }}</span>
-        <span class="choice-text">{{ text }}</span>
-        {% if key == question.answer %}<span class="badge badge-correct">✓ Correct</span>{% endif %}
-        {% if key == chosen and chosen != question.answer %}<span class="badge badge-wrong">✗ Your answer</span>{% endif %}
+        <span class="choice-text">{{ text | md_inline }}</span>
+        {% if key in question.answers %}<span class="badge badge-correct">✓ Correct</span>{% endif %}
+        {% if key in chosen and key not in question.answers %}<span class="badge badge-wrong">✗ Your answer</span>{% endif %}
       </div>
     {% endfor %}
   </div>
 
-  <div class="result-banner {% if chosen == question.answer %}result-correct{% else %}result-wrong{% endif %}">
-    {% if chosen == question.answer %}
+  {% set is_correct = question.is_correct(chosen) %}
+  <div class="result-banner {% if is_correct %}result-correct{% else %}result-wrong{% endif %}">
+    {% if is_correct %}
       Correct! Well done.
     {% else %}
-      Incorrect. The correct answer is <strong>{{ question.answer }}</strong>.
+      Incorrect. You chose <strong>{{ chosen | join(', ') or '—' }}</strong>;
+      the correct answer is <strong>{{ question.answer }}</strong>.
+      {% if question.is_multi %}Multiple-response questions need an exact match.{% endif %}
     {% endif %}
   </div>
 
   <div class="explanation">
-    <h3>Explanation</h3>
-    <p>{{ question.explanation }}</p>
+    <h3>Why {{ question.answer }} is correct{% if question.reference %} · {{ question.reference }}{% endif %}</h3>
+    {{ question.explanation_lead | md }}
+
+    {% if question.explanation_points %}
+      <h4 class="explanation-sub">Why the other options fail</h4>
+      <ul class="explanation-points">
+        {% for point in question.explanation_points %}
+          <li>{{ point | md_inline }}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
   </div>
+
+  {% if question.sources %}
+    <div class="sources">
+      <h3>Read it in the docs</h3>
+      <ul class="source-list">
+        {% for source in question.sources %}
+          <li class="source">
+            <a href="{{ source.url }}" target="_blank" rel="noopener noreferrer">{{ source.url }}</a>
+            {% if source.quote %}<blockquote class="source-quote">{{ source.quote }}</blockquote>{% endif %}
+            {% if source.note %}<p class="source-note">{{ source.note | md_inline }}</p>{% endif %}
+            {% if source.retrieved_at %}<span class="source-date">read {{ source.retrieved_at }}</span>{% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+  {% endif %}
 
   <div class="navigation">
     {% if next_question %}
@@ -44,4 +79,6 @@
     {% endif %}
   </div>
 </article>
+
+{% include "_nav.html" %}
 {% endblock %}

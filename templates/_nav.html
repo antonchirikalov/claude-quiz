@@ -1,0 +1,46 @@
+{# Question-number navigator: jump to any question, see what is still open. #}
+<nav class="qnav" aria-label="Question navigation">
+  <div class="qnav-header">
+    <span class="qnav-title">Questions</span>
+    <span class="qnav-legend">
+      <span class="qnav-key state-correct"></span> correct
+      <span class="qnav-key state-wrong"></span> wrong
+      <span class="qnav-key state-unanswered"></span> open
+    </span>
+  </div>
+
+  {% for group in nav %}
+    <div class="qnav-row">
+      {% if group.short_label %}<span class="qnav-group">{{ group.short_label }}</span>{% endif %}
+      <div class="qnav-cells">
+        {% for item in group.cells %}
+          {% if item.state == 'unanswered' %}
+            {% set target = url_for('quiz.question', qid=item.id) %}
+          {% else %}
+            {% set target = url_for('quiz.answer', qid=item.id) %}
+          {% endif %}
+          <a href="{{ target }}"
+             class="qnav-cell state-{{ item.state }}{% if item.current %} qnav-current{% endif %}"
+             {% if item.current %}aria-current="page"{% endif %}
+             title="Question {{ item.number }} — {{ item.state }}{% if item.multi %}, multiple response{% endif %}">{{ item.number }}{% if item.multi %}<span class="qnav-multi">+</span>{% endif %}</a>
+        {% endfor %}
+      </div>
+    </div>
+  {% endfor %}
+
+  <div class="qnav-steps">
+    {% if previous_question %}
+      {% set prev_route = 'quiz.answer' if previous_question.id in answered else 'quiz.question' %}
+      <a href="{{ url_for(prev_route, qid=previous_question.id) }}" class="btn btn-secondary qnav-step">← Previous</a>
+    {% else %}
+      <span class="btn btn-secondary qnav-step qnav-step-off">← Previous</span>
+    {% endif %}
+    {% if next_in_order %}
+      {% set next_route = 'quiz.answer' if next_in_order.id in answered else 'quiz.question' %}
+      <a href="{{ url_for(next_route, qid=next_in_order.id) }}" class="btn btn-secondary qnav-step">Next in order →</a>
+    {% else %}
+      <span class="btn btn-secondary qnav-step qnav-step-off">Next in order →</span>
+    {% endif %}
+    <a href="{{ url_for('quiz.results') }}" class="btn btn-secondary qnav-step">Results</a>
+  </div>
+</nav>

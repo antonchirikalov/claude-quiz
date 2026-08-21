@@ -54,38 +54,118 @@ def get_question(qid: str, questions: list[Question]) -> Question:
     raise QuizError(f"Unknown question id: '{qid}'")
 
 
-def record_answer(session: Any, qid: str, choice: str) -> None:
-    """Store the user's choice for a question in the Flask session."""
-    answers: dict[str, str] = session.get("answers", {})
-    answers[qid] = choice
+def nav_groups(
+    questions: list[Question], answers: dict[str, list[str]], current_id: str | None = None
+) -> list[dict]:
+    """Build the question-number navigator, one group per scenario block.
+
+    Banks grouped by domain carry no scenario title, so they collapse into a
+    single unlabelled group. Each item reports its answered state so the grid
+    can show at a glance what is still open.
+    """
+    groups: list[dict] = []
+    for number, q in enumerate(questions, start=1):
+        label = q.scenario_title
+        if not groups or groups[-1]["label"] != label:
+            # "Scenario 3 · Multi-Agent Research System" → "Scenario 3"
+            short = label.split("·", 1)[0].strip() if label else None
+            # Key is "cells", not "items": in Jinja `group.items` resolves to the dict
+            # method, not the key.
+            groups.append({"label": label, "short_label": short, "cells": []})
+
+        chosen = answers.get(q.id)
+        if chosen is None:
+            state = "unanswered"
+        else:
+            state = "correct" if q.is_correct(chosen) else "wrong"
+        groups[-1]["cells"].append(
+            {
+                "number": number,
+                "id": q.id,
+                "state": state,
+                "current": q.id == current_id,
+                "multi": q.is_multi,
+            }
+        )
+    return groups
+
+
+def neighbours(
+    questions: list[Question], question: Question
+) -> tuple[Question | None, Question | None]:
+    """Return the questions before and after this one in bank order."""
+    index = questions.index(question)
+    previous = questions[index - 1] if index > 0 else None
+    following = questions[index + 1] if index + 1 < len(questions) else None
+    return previous, following
+
+
+def domain_counts(questions: list[Question]) -> list[tuple[str, int]]:
+    """Return (domain, question count) pairs, sorted by domain name."""
+    counts: dict[str, int] = {}
+    for q in questions:
+        counts[q.domain] = counts.get(q.domain, 0) + 1
+    return sorted(counts.items())
+
+
+def get_answers(session: Any) -> dict[str, list[str]]:
+    """Return the session's answer map, normalising legacy single-string values."""
+    raw: dict[str, Any] = session.get("answers", {}) or {}
+    return {qid: ([v] if isinstance(v, str) else list(v)) for qid, v in raw.items()}
+
+
+def record_answer(session: Any, qid: str, choice: str | list[str]) -> None:
+    """Store the user's selected choice key(s) for a question in the Flask session."""
+    chosen = [choice] if isinstance(choice, str) else list(choice)
+    answers = get_answers(session)
+    answers[qid] = chosen
     session["answers"] = answers
 
 
 def score_session(session: Any, questions: list[Question]) -> dict:
-    """Compute score from session answers. Returns {correct, total, pct, breakdown}."""
-    answers: dict[str, str] = session.get("answers", {})
+    """Compute score from session answers.
+
+    Returns {correct, total, pct, breakdown, by_domain}. Multiple-response
+    questions count as correct only on an exact match — no partial credit,
+    matching how the real exam scores them.
+    """
+    answers = get_answers(session)
     breakdown = []
+    by_domain: dict[str, dict[str, int]] = {}
     correct = 0
     for q in questions:
         chosen = answers.get(q.id)
-        is_correct = chosen == q.answer
+        is_correct = q.is_correct(chosen)
         if is_correct:
             correct += 1
         breakdown.append(
             {
                 "question": q,
-                "chosen": chosen,
+                "chosen": chosen or [],
                 "correct": is_correct,
             }
         )
+        stats = by_domain.setdefault(q.domain, {"correct": 0, "total": 0})
+        stats["total"] += 1
+        stats["correct"] += 1 if is_correct else 0
+
+    for stats in by_domain.values():
+        stats["pct"] = round(stats["correct"] / stats["total"] * 100) if stats["total"] else 0
+
     total = len(questions)
     pct = round(correct / total * 100) if total else 0
-    return {"correct": correct, "total": total, "pct": pct, "breakdown": breakdown}
+    return {
+        "correct": correct,
+        "total": total,
+        "pct": pct,
+        "breakdown": breakdown,
+        "by_domain": dict(sorted(by_domain.items())),
+    }
 
 
 def next_unanswered(session: Any, questions: list[Question]) -> Question | None:
     """Return the first question the user hasn't answered yet, or None."""
-    answers: dict[str, str] = session.get("answers", {})
+    answers = get_answers(session)
     for q in questions:
         if q.id not in answers:
             return q

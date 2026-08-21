@@ -12,7 +12,7 @@
         {% for exam in exams %}
           <li>
             <a href="{{ url_for('quiz.index', exam=exam) }}" class="btn btn-primary exam-btn">
-              {{ exam | replace('-', ' ') | title }}
+              {{ exam | upper }}
             </a>
           </li>
         {% endfor %}
@@ -24,7 +24,7 @@
 
 {% elif mode == "select_file" %}
   <section class="hero">
-    <h1>{{ exam | replace('-', ' ') | title }}</h1>
+    <h1>{{ exam | upper }}</h1>
     <p>Select a question set to practice:</p>
     <form method="post" action="{{ url_for('quiz.select') }}" class="file-select-form">
       <input type="hidden" name="exam" value="{{ exam }}">
@@ -38,27 +38,40 @@
   </section>
 
 {% elif mode == "quiz" %}
+  {% set answered_count = questions | selectattr('id', 'in', answered) | list | length %}
+  {% set resume = questions | rejectattr('id', 'in', answered) | first %}
   <section class="hero">
-    <h1>Claude Certified Architect Practice Exam</h1>
-    <p>Test your knowledge across {{ questions | length }} questions covering model capabilities,
-       prompt engineering, safety, tool use, and API deployment.</p>
+    <h1>{% if exam %}{{ exam | upper }}{% else %}Claude Certified Architect{% endif %} Practice Exam</h1>
+    <p>{{ questions | length }} questions{% if multi_count %},
+       {{ multi_count }} of them multiple-response{% endif %}. Every answer comes with a full
+       breakdown of why the other options are wrong.</p>
 
-    {% set first = questions[0] if questions else none %}
-    {% if first %}
-      <a href="{{ url_for('quiz.question', qid=first.id) }}" class="btn btn-primary">Start Quiz</a>
+    {% if resume %}
+      <a href="{{ url_for('quiz.question', qid=resume.id) }}" class="btn btn-primary">
+        {% if answered_count %}Resume ({{ answered_count }} answered){% else %}Start Quiz{% endif %}
+      </a>
+    {% elif questions %}
+      <a href="{{ url_for('quiz.results') }}" class="btn btn-primary">View Results →</a>
     {% else %}
       <p class="empty-state">No questions found in this file.</p>
     {% endif %}
   </section>
 
-  <section class="domains">
-    <h2>Domains covered</h2>
-    <ul>
-      {% for q in questions %}
-        <li><span class="domain-tag">{{ q.domain }}</span> {{ q.stem[:80] }}…</li>
-      {% endfor %}
-    </ul>
-  </section>
+  {% if domains %}
+    <section class="domains">
+      <h2>Domains covered</h2>
+      <table class="domain-table">
+        <tbody>
+          {% for name, count in domains %}
+            <tr>
+              <td><span class="domain-tag">{{ name }}</span></td>
+              <td class="domain-count">{{ count }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+  {% endif %}
 
 {% endif %}
 
