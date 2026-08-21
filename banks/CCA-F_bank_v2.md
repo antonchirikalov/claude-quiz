@@ -354,7 +354,7 @@ Your team uses Claude Code for code generation, refactoring, debugging and docum
 
 A legal-operations team processes supplier contracts: 40 to 200 pages each, PDFs converted to text, arriving in batches of several thousand. For each contract the pipeline must extract party names, effective and termination dates, payment terms, liability caps and renewal clauses into records that load into a database with no manual review. Fields are frequently absent, and formats vary by supplier.
 
-**46.** Each request currently opens with the extraction instructions and the field list, followed by the 80-page contract, and closes with the query. Accuracy on the later fields is poor. What does the documentation prescribe for the layout?
+**46.** Each request currently opens with the extraction instructions and the field list, followed by the 80-page contract, and closes with the query. Accuracy on the later fields is poor. How should the request be laid out instead?
 
 - A. Split the contract into 10-page chunks and issue one request per chunk and field
 - B. Move the contract to the top of the prompt, above the query, instructions and examples
@@ -500,12 +500,12 @@ Your platform team maintains an assistant that engineers across the company use 
 - C. Summarise the series statistically and return the summary rather than the rows
 - D. Keep the tool and instruct agents to call it only for narrowly scoped questions
 
-**66.** A new engineer clones the repository and the committed `.mcp.json` servers all sit at "Pending approval", even though the project's settings enable them. What explains it?
+**66.** An extraction step must always return its result through the `extract_fields` tool, but the model sometimes answers in prose and the pipeline has nothing to parse. Which setting fixes this, and what does it cost?
 
-- A. The servers need `claude mcp reset-project-choices` before a first connection
-- B. Their Claude Code version predates project scope and ignores `.mcp.json`
-- C. Approvals committed to the repo are ignored until the workspace is trusted
-- D. Project-scoped servers require explicit approval on every machine, every session
+- A. `tool_choice: auto`, with the requirement restated in the tool's description
+- B. `tool_choice: any`, which forces a call but leaves the choice of tool open
+- C. `tool_choice` naming the tool, which forces it and drops the preamble text
+- D. `strict: true` on the tool, which makes the model call it whenever relevant
 
 **67.** The issue-tracker server ships several prompts — creating an issue, listing open PRs, requesting a review. Engineers want to trigger them directly rather than describing the intent and hoping the model picks the right tool. What do you point them to?
 
@@ -572,6 +572,291 @@ Your platform team maintains an assistant that engineers across the company use 
 
 ---
 
+## Scenario 6 · CI/CD & Automated Review
+
+Your platform team runs Claude Code inside CI. On every pull request it reviews the diff and comments; nightly it runs a maintenance pass across the monorepo. Runs are unattended, must behave identically on every runner, and must fail the build loudly rather than pass quietly. Some pull requests come from forks.
+
+**76.** The same review prompt produces different results on different runners. One engineer has a personal hook in `~/.claude`, and the repository ships an `.mcp.json`. What makes a `-p` run reproducible?
+
+- A. Pin the model with `--model` so runner-to-runner variation disappears
+- B. Add `--bare`, which skips discovery of hooks, skills, MCP and `CLAUDE.md`
+- C. Set `--permission-mode dontAsk` so unapproved tools cannot run at all
+- D. Commit a `.claude/settings.json` that overrides whatever each machine has
+
+**77.** A security reviewer asks what a `claude -p` run does when CI checks out an untrusted contributor's branch that contains its own `.claude/settings.json`. What is the honest answer?
+
+- A. Nothing runs: an untrusted workspace disables project settings entirely
+- B. The hooks are ignored, because `-p` cannot display the trust dialog
+- C. Claude Code prompts on the runner, and the job blocks until it times out
+- D. The hooks run, precisely because `-p` shows no trust dialog to gate them
+
+**78.** The review job must fail the build when Claude reports a blocking finding, and pass otherwise. The decision has to be made by the workflow, not by a human reading the log. How should the run be wired?
+
+- A. Return the verdict as JSON against a schema and branch on the parsed field
+- B. Grep the plain-text output for the word "blocking" and fail on a match
+- C. Have Claude run `exit 1` through Bash when it finds something blocking
+- D. Post the review as a PR comment and let a required reviewer decide
+
+**79.** The nightly job should be able to read the repository and run the test command, and nothing else — no network, no writes outside the workspace, no surprises from a new tool. What gives that baseline?
+
+- A. `--allowedTools` listing every tool the prompt is expected to need
+- B. `acceptEdits`, which limits the run to file edits and common shell commands
+- C. `dontAsk`, which denies anything outside the allow rules and read-only set
+- D. Running the job in a container, since permissions are a host-level concern
+
+**80.** The maintenance job silently reported success for a week. It turned out authentication had expired and every run failed immediately. What should the workflow have checked?
+
+- A. Whether the output contains an error string, since failures are printed as the result
+- B. The process exit status, which is non-zero when the run itself fails
+- C. Whether the session file was written, which only happens on a successful run
+- D. The `total_cost_usd` field, which is zero when no model request was made
+
+**81.** A generated migration keeps failing one assertion. Two rounds of "the date handling is still wrong, please fix it properly" have not converged. What is the most effective next input?
+
+- A. The failing test's name and output, with an instruction to make it pass
+- B. The same instruction with "IMPORTANT" prefixed, to raise adherence
+- C. A rewritten prose description of correct date handling, in more detail
+- D. A request to explain the current implementation before changing it again
+
+**82.** In an interactive session you have corrected the same misunderstanding three times and the answers are getting worse, not better. What does the guidance prescribe?
+
+- A. Keep correcting: the model converges once the constraint is stated enough times
+- B. Switch to a stronger model and continue in the same conversation
+- C. Clear the context and restart with a prompt that includes what you learned
+- D. Compact the conversation so the corrections survive but the noise is dropped
+
+**83.** The nightly job's cost has grown. `CLAUDE.md` is now 900 lines, most of it a directory listing and a dependency inventory. What is the correct trim, and why does it matter more in CI than locally?
+
+- A. Move it to `.claude/rules/` so it loads only when matching files are touched
+- B. Split it across `@import` files, which spreads the content over several loads
+- C. Nothing: `CLAUDE.md` size is a one-time cost amortised across the run's turns
+- D. Cut what Claude can derive from the code; it is re-read on every single run
+
+**84.** The team's review checklist already exists as a skill in `.claude/skills/`. The workflow should run exactly that, not a paraphrase of it in the workflow file. What goes in the `prompt` input?
+
+- A. The skill's body, pasted in, so the workflow is self-contained and auditable
+- B. The skill invocation, `/skill-name`, with a checkout step ahead of the action
+- C. A reference to the skill file path, which the action reads from the repository
+- D. Nothing — a skill in the repository is discovered and applied automatically
+
+**85.** Generated protobuf stubs under `gen/` must never be edited by Claude, and the rule should cost nothing on runs that do not touch them. Where does it belong?
+
+- A. In `CLAUDE.md`, stated as a prohibition near the top of the file
+- B. In `.gitignore`, so the files are invisible to the working tree
+- C. In a `.claude/rules/` file scoped with a `paths` pattern for `gen/**`
+- D. In `--allowedTools`, by omitting the `Edit` tool from the nightly run
+
+**86.** A maintenance prompt needs every call site of a deprecated function across 4,000 files. The agent has Bash available. What should it use, and why does the choice matter here?
+
+- A. `Grep`, the purpose-built search tool, which avoids shelling out per pattern
+- B. `Bash` with `grep -r`, since a single shell command is fewer tool calls
+- C. `Read` over the candidate files, so the surrounding context comes back too
+- D. `Glob` to enumerate the files, then `Bash` to search each one in sequence
+
+**87.** In a locked-down run the agent's first `Edit` call fails before touching anything. The path is correct and the file exists. What is the most likely cause?
+
+- A. The nightly job's permission mode denies edits regardless of the allow list
+- B. The file is generated, and generated paths are excluded from edit tools
+- C. Two edits in the same turn collided, and the second was rejected
+- D. The file had not been read in this session, which `Edit` requires first
+
+**88.** An `Edit` call is rejected because the anchor text occurs three times in the file. All three occurrences need the same change. What is the appropriate response?
+
+- A. Read the file and rewrite it whole with `Write`, which has no anchor
+- B. Re-issue the edit with `replace_all`, since every occurrence is intended
+- C. Issue three separate edits, each with more surrounding context
+- D. Use `Bash` with `sed -i`, which replaces every occurrence in one call
+
+**89.** A colleague proposes capping the nightly agent with `--max-turns 5` and calls that the loop's termination condition. Is the framing right?
+
+- A. Yes — a turn cap is exactly what stops an agentic loop from running away
+- B. Yes, provided the cap is tuned so most tasks finish inside the budget
+- C. No — a cap is a budget ceiling; the loop ends on the model's stop reason
+- D. No — turn caps apply to interactive sessions and are ignored under `-p`
+
+**90.** You are writing the loop for a custom automation around the API rather than using Claude Code. Under what condition does the tool-calling loop continue?
+
+- A. While the stop reason indicates tool use, exiting on any other value
+- B. While the response contains a text block that does not say it is finished
+- C. Until a fixed iteration count is reached, which bounds cost predictably
+- D. While the response contains no `end_turn`, which is the only exit signal
+
+---
+
+## Scenario 7 · Regulatory Reporting Pipeline
+
+A financial-services firm files quarterly regulatory reports. A coordinator agent drives the run: extraction agents pull figures from source systems, a reconciliation agent cross-checks them, a drafting agent writes the narrative sections, and a compliance officer signs off before filing. A quarter's run covers roughly 8,000 source documents. Filing a wrong figure is a reportable event.
+
+**91.** The coordinator currently runs all four stages for every request, including single-figure lookups that a compliance analyst fires ad hoc during the quarter. Those take twelve minutes each. What should change?
+
+- A. Cache the reconciliation output so repeated lookups skip that stage
+- B. Have the coordinator select which agents a request needs before invoking any
+- C. Run the four stages concurrently so the total is the slowest stage, not the sum
+- D. Route ad-hoc lookups to a cheaper model while the quarterly run keeps the pipeline
+
+**92.** The reconciliation agent is told to "cross-check the figures the extraction agents produced" and reports that it has no figures. The extraction agents completed successfully and their results are in the coordinator's transcript. What is wrong?
+
+- A. Reconciliation must wait until every extraction agent has finished, and it did not
+- B. The reconciliation agent lacks the tool that reads other agents' stored results
+- C. The extraction results exceeded the length a delegation message can carry
+- D. A subagent starts with an isolated context, so the figures must be in its prompt
+
+**93.** A filing must never be submitted before reconciliation has passed. Right now the system prompt tells the coordinator to reconcile first, and twice it has drafted a filing from unreconciled figures. What is the correct design?
+
+- A. A gate in code that blocks the filing tool until reconciliation has returned a pass
+- B. A stronger instruction, stating the ordering requirement in capitals and repeating it
+- C. A reminder injected before each filing attempt asking whether reconciliation ran
+- D. A post-filing check that withdraws the submission when reconciliation later fails
+
+**94.** Two tasks arrive. The first: produce the standard quarterly report, whose eleven sections are fixed by the regulator. The second: investigate why one subsidiary's figures diverge from the consolidated total, where each finding determines what to look at next. How should each be decomposed?
+
+- A. Both as fixed pipelines, since both end in a document with a known structure
+- B. The report adaptively so sections can be reordered; the investigation as a fixed checklist
+- C. The report as a fixed sequence of passes; the investigation as adaptive decomposition
+- D. Both adaptively, because the underlying source systems vary between subsidiaries
+
+**95.** A reconciliation run crashed four hours in, after eleven of fourteen source systems were processed. The agents wrote nothing outside their context windows. What design would have made recovery possible?
+
+- A. A larger context window, so the completed work would not have been lost
+- B. Each agent exporting state to a known place, plus a manifest loaded on resume
+- C. The coordinator holding every agent's full transcript so it can replay the run
+- D. One agent doing all fourteen systems, so there is a single place to restart from
+
+**96.** An analyst asks the drafting agent directly for a figure, bypassing the coordinator, and gets an answer that contradicts the filed report. An engineer proposes letting agents query each other directly to avoid such mismatches. What is the objection?
+
+- A. Routing through the coordinator is what gives observability and error handling
+- B. Direct agent-to-agent calls are not technically possible in a hub-and-spoke design
+- C. The drafting agent would misinterpret a request written for a different agent
+- D. Two agents holding the same figure in context is itself the inconsistency to avoid
+
+**97.** An extraction agent hands off to reconciliation. The handoff currently passes the agent's full transcript, and reconciliation's context fills before it finishes. What should the handoff carry instead?
+
+- A. A pointer to the transcript, so reconciliation reads only the parts it needs
+- B. The last twenty messages, which hold the figures and drop the exploration
+- C. A structured record: each figure, its source document, and the extraction date
+- D. A summary written by the extraction agent in its own words, for brevity
+
+**98.** The narrative sections must each cite the figures they discuss, and a reviewer needs to check any citation without re-running the pipeline. What should the drafting stage produce?
+
+- A. The narrative, with a separate pass afterwards that attaches citations to claims
+- B. The narrative plus the full source documents, so a reviewer can search them
+- C. The narrative, with the coordinator holding the figure-to-source mapping
+- D. Claim-to-source pairs created upstream and carried through drafting unchanged
+
+**99.** All 8,000 documents must be processed before the filing deadline in three weeks. Nobody waits on any individual result. The same extraction prompt also serves the analysts' interactive lookups. How should the bulk run be issued?
+
+- A. As batch requests, leaving the interactive path on standard requests
+- B. Through the interactive path at low concurrency, to keep one code path
+- C. Through the interactive path at maximum concurrency over a single weekend
+- D. As batch requests for everything, including the analysts' interactive lookups
+
+**100.** A colleague proposes moving the analysts' ad-hoc lookups to batch as well, since batch costs half as much. The analyst waits at their desk for the answer. What is the deciding constraint?
+
+- A. Batch cannot carry multi-turn tool calling, which the lookup path needs
+- B. Batch results arrive out of order, so a single lookup cannot be matched back
+- C. The execution window runs up to 24 hours, which no waiting analyst tolerates
+- D. Batch pricing applies only above a minimum request count the lookups miss
+
+**101.** The reconciliation agent both computes the figures and flags the ones it considers doubtful. Its flags have proved unreliable — it rarely doubts its own arithmetic. What should change?
+
+- A. Require a written justification for every figure the agent chooses to flag
+- B. Have a separate pass check the computed figures against the source documents
+- C. Ask for the doubts before the figures, so scepticism precedes the calculation
+- D. Drop the flags and rely on the compliance officer's review to catch errors
+
+**102.** Roughly one extracted record in forty fails to load: a currency field arrives as `"1.2M"`, `"1,200,000"` or `"1.2 million"` depending on the source document. The loader must receive one canonical form. What closes this most reliably?
+
+- A. A tolerant parser in the loader that normalises the known variants it receives
+- B. An instruction naming the canonical form, repeated in the field description
+- C. A validation pass that rejects non-canonical records back for re-extraction
+- D. A constrained output schema plus examples pairing each real input with its form
+
+**103.** The compliance officer signs off on every filing and reviews 400 figures per quarter, most of which are routine. Sign-off has become a formality, and one wrong figure reached a filing. Where should the human review effort go?
+
+- A. To the figures the pipeline itself marks as uncertain, with the routine ones sampled
+- B. To every figure, since regulatory exposure makes exhaustive review the safe choice
+- C. To a random sample sized so the expected number of missed errors is acceptable
+- D. To the final narrative rather than the figures, since that is what the regulator reads
+
+**104.** For the pipeline to mark a figure as uncertain, it needs a usable signal. An engineer proposes asking the reconciliation agent to score its own confidence from 1 to 10 and escalating anything under 7. What is the weakness?
+
+- A. A ten-point scale is too granular; a three-level scale would be more stable
+- B. Self-scored confidence has to be calibrated against outcomes to mean anything
+- C. The threshold will need retuning every quarter as the source systems change
+- D. Scores cannot be compared across agents, so one threshold cannot serve them all
+
+**105.** A source system returns a permission error for one subsidiary. The extraction agent returns an empty result set, and the filing proceeds with that subsidiary's figures reported as zero. What should the agent have returned?
+
+- A. A retry loop that continues until the permission problem is resolved upstream
+- B. An error result naming what failed and whether it is retryable, for the coordinator
+- C. A halt of the entire run, since a missing subsidiary invalidates the consolidation
+- D. The subsidiary's figures from the previous quarter, flagged as carried forward
+## Domain 6 · Промпт-кеширование (вне блюпринта)
+
+> Exam Guide v1.0 относит кеширование к **Out-of-Scope** — «beyond knowing it exists». Но сдававшие сообщают, что вопросы по нему на экзамене были, поэтому блок в банке есть. Он помечен отдельным доменом, чтобы не искажать веса пяти оцениваемых доменов.
+> Глубина сознательно ограничена: что кеш делает, когда уместен, что его ломает, как считается экономика. Минимальные размеры префикса по моделям, окно просмотра в 20 блоков и прогрев через `max_tokens: 0` существуют, но за границей подтверждённого.
+
+**106.** A support agent sends the same 6,000-token system prompt on every request and marks it for caching. Across thousands of requests the cache-read token count stays at zero. The prompt's first line reads `Current time: 2026-08-21 14:02:11`. What is happening?
+
+- A. The marker sits on the wrong block, so the system prompt is never written to the cache
+- B. The prefix differs every request, so a later request has nothing it can match against
+- C. The prompt is below the length at which an entry is created, so writes are skipped
+- D. Entries expire before the next request arrives, so every write is paid for and wasted
+
+**107.** The agent needs the current date and the user's display name available on every turn. The shared instructions ahead of them must keep hitting the cache. Where do the two dynamic values belong?
+
+- A. At the top of the system prompt, ahead of the instruction block being cached
+- B. Interpolated into each tool description, which is far smaller than the system prompt
+- C. In the messages, after the last breakpoint, so nothing ahead of them ever changes
+- D. Nowhere — a request carrying per-request values cannot also benefit from caching
+
+**108.** A classification service receives one unrelated 800-token document per request. Nothing is shared between requests except a two-sentence instruction. Should caching be switched on?
+
+- A. No — with no reusable prefix a marker buys the write premium and never earns it
+- B. Yes — each document is cached, so a repeat submission of the same one costs less
+- C. Yes — the instruction gets cached, which is small but free once the entry exists
+- D. No, unless documents are sorted so that similar ones tend to arrive close together
+
+**109.** A 20,000-token prefix is shared across requests, and you are deciding whether the default lifetime is worth enabling. Roughly how much reuse does it take before caching pays for itself?
+
+- A. One request — a cache write costs the same as an ordinary uncached request does
+- B. Ten or more, because the write premium is several times the base input price
+- C. It never pays off on the default lifetime; only the one-hour option can break even
+- D. About two — the write premium is modest and a read costs a fraction of base input
+
+**110.** Mid-conversation the application adds one new tool to the request. The next request reprocesses the entire conversation history uncached. Why does one added tool cost the whole history?
+
+- A. Because any change to the request body invalidates every level of the cache at once
+- B. Because tools are the first prefix level, so a change invalidates every later one
+- C. Because the added description pushed the prefix beyond the window that is searched
+- D. Because a changed tool list routes the request differently, and entries are per-route
+
+**111.** A batch job reuses a large cached prefix and fires the next request the moment the previous response finishes. Every second request is a cache miss. Responses stream for about four and a half minutes each. What explains it?
+
+- A. The default lifetime is one minute, so any response longer than that loses the entry
+- B. Streaming responses do not refresh an entry the way non-streaming responses do
+- C. The lifetime runs from the request's start, so generation time counts against it
+- D. Each new write replaces the previous entry, so only the newest prefix stays readable
+
+**112.** Twenty requests sharing an identical 30,000-token prefix are dispatched in parallel. Not one of them reports a cache read. What should change?
+
+- A. Send one request, wait for its response to begin, then dispatch the remaining nineteen
+- B. Nothing — parallel requests land on different instances, which hold separate caches
+- C. Cap concurrency at four, matching the number of breakpoints a request may carry
+- D. Nothing is wrong: the reads will appear on the next batch, once an entry has been written
+
+**113.** An agent has been running for hours over a long conversation. The last response reports 4,000 input tokens, which is far smaller than the conversation obviously is. How should that number be read?
+
+- A. As the total prompt size, meaning the history must have been compacted along the way
+- B. As the newest turn only, because earlier turns are never counted again once cached
+- C. As a value that is capped for long conversations and stops being meaningful past a point
+- D. As the uncached remainder — the total is that plus the cache-write and cache-read counts
+
+---
+
+
+---
+
 # Часть 2 — ключ и разбор
 
 Запись: номер, верный вариант, task statement, разбор, затем почему остальные варианты выглядят рабочими и всё же неверны, затем ссылка на документацию.
@@ -607,7 +892,7 @@ Your platform team maintains an assistant that engineers across the company use 
 - C: подтверждение того, чего не произошло, — худший вариант: молчаливый сбой плюс дезинформация.
 - D: эскалация выбрасывает проделанную работу, и это техническая ошибка, а не пробел в политике.
 
-**6 · D** · TS 5.2. Корень — размытая граница решения, значит явные критерии плюс примеры на обе стороны границы.
+**6 · D** · TS 5.5. Корень — размытая граница решения, значит явные критерии плюс примеры на обе стороны границы.
 - A: самооценённая уверенность плохо калибрована, а агент уже неверно уверен именно в сложных случаях. Экзамен считает этот вариант неверным устойчиво.
 - B: тональность не коррелирует со сложностью случая — решается другая задача.
 - C: разметка и ML-инфраструктура до того, как испробована оптимизация промпта, — переусложнение.
@@ -749,7 +1034,7 @@ Your platform team maintains an assistant that engineers across the company use 
 - Смежная ловушка: если один источник за 2023 год, а другой за 2026, это не конфликт, а разные периоды. Поэтому даты сбора данных требуют в структурированном выводе отдельно.
 Источник: Exam Guide v1.0, стр. 23 (TS 5.6) — «How to handle conflicting statistics from credible sources: annotating conflicts with source attribution rather than arbitrarily selecting one value».
 
-**30 · B** · TS 5.4. Каждый агент выгружает состояние в известное место, координатор при возобновлении читает манифест и вкладывает его в промпты агентов.
+**30 · B** · TS 5.1. Каждый агент выгружает состояние в известное место, координатор при возобновлении читает манифест и вкладывает его в промпты агентов.
 - A: увеличенное окно не переживает падение процесса.
 - C: полные транскрипты субагентов в контексте координатора — тот самый перерасход, ради которого их и разделяли, и они всё равно теряются при падении.
 - D: один агент на всё сводит на нет изоляцию контекста и не даёт восстановления.
@@ -772,7 +1057,7 @@ Your platform team maintains an assistant that engineers across the company use 
 Источник: https://code.claude.com/docs/en/memory#import-additional-files — «CLAUDE.md files can import additional files using `@path/to/import` syntax. Imported files are expanded and loaded into context at launch alongside the CLAUDE.md that references them.»
 Источник: https://code.claude.com/docs/en/memory#my-claude-md-is-too-large — «Splitting into `@path` imports helps organization but doesn't reduce context, since imported files load at launch.»
 
-**33 · A** · TS 3.1. Правило в `.claude/rules/` с `paths` во фронтматтере грузится только когда Claude работает с подходящими файлами. Одно правило покрывает все сорок каталогов и не висит в контексте всё остальное время.
+**33 · A** · TS 3.3. Правило в `.claude/rules/` с `paths` во фронтматтере грузится только когда Claude работает с подходящими файлами. Одно правило покрывает все сорок каталогов и не висит в контексте всё остальное время.
 - B: `CLAUDE.md` в каждом каталоге с тестами — сорок файлов вместо одного, и все они действуют на весь каталог, а не на тестовые файлы в нём.
 - C: скилл сработает, когда его позовут или когда модель сочтёт релевантным. Конвенции, обязательные всегда, на такое условие не ставят.
 - D: раздел в корневом `CLAUDE.md` работает, но грузится в каждую сессию, включая те, где тестов никто не касается. Это и есть та трата, от которой избавляют `paths`.
@@ -804,47 +1089,47 @@ Your platform team maintains an assistant that engineers across the company use 
 Источник: https://code.claude.com/docs/en/memory#when-to-add-to-claude-md — «Keep it to facts Claude should hold in every session: build commands, conventions, project layout, "always do X" rules. If an entry is a multi-step procedure or only matters for one part of the codebase, move it to a skill or a path-scoped rule instead.»
 Источник: https://code.claude.com/docs/en/skills — «Create a skill when you keep pasting the same instructions, checklist, or multi-step procedure into chat, or when a section of CLAUDE.md has grown into a procedure rather than a fact.»
 
-**38 · D** · TS 3.3. Три признака из документации сходятся одновременно: подход неясен, правка задевает много файлов, границы сервисов не определены. Plan mode существует ровно для этого — исследовать и предложить, ничего не меняя.
+**38 · D** · TS 3.4. Три признака из документации сходятся одновременно: подход неясен, правка задевает много файлов, границы сервисов не определены. Plan mode существует ровно для этого — исследовать и предложить, ничего не меняя.
 - A: детальные инструкции наперёд требуют знать структуру сервисов, а она и есть предмет неопределённости.
 - B: «границы выяснятся по ходу реализации» — это переписывание уже написанного кода вместо разведки.
 - C: переключиться потом можно, но к тому моменту решения уже приняты в коде.
 Источник: https://code.claude.com/docs/en/permission-modes#analyze-before-you-edit-with-plan-mode — «Plan mode tells Claude to research and propose changes without making them. Claude reads files, runs shell commands to explore, and writes a plan, but does not edit your source.»
 Источник: https://code.claude.com/docs/en/best-practices#explore-first-then-plan-then-code — «Planning is most useful when you're uncertain about the approach, when the change modifies multiple files, or when you're unfamiliar with the code being modified.»
 
-**39 · C** · TS 3.3. Обратная сторона того же критерия. Область известна, файл один, диff описывается одним предложением — документация в этом случае говорит «делай напрямую», причём с оговоркой, что plan mode добавляет накладные расходы.
+**39 · C** · TS 3.4. Обратная сторона того же критерия. Область известна, файл один, диff описывается одним предложением — документация в этом случае говорит «делай напрямую», причём с оговоркой, что plan mode добавляет накладные расходы.
 - A: «любое изменение выигрывает от разведки» — правило, которого в документации нет, и оно прямо опровергнуто.
 - B: составить план и выбросить — цикл без результата.
 - D: обход всего модуля субагентом при готовом стектрейсе на конкретную функцию — работа, которой не должно быть.
 Источник: https://code.claude.com/docs/en/best-practices#explore-first-then-plan-then-code — «Plan mode is useful, but also adds overhead. For tasks where the scope is clear and the fix is small (like fixing a typo, adding a log line, or renaming a variable) ask Claude to do it directly. […] If you could describe the diff in one sentence, skip the plan.»
 
-**40 · A** · TS 5.1. Механизм ровно под этот симптом: разведка идёт в отдельном контекстном окне, а в основной диалог возвращается только сводка. Симптом «начал перечитывать уже прочитанное» — классический признак заполненного окна.
+**40 · A** · TS 5.4. Механизм ровно под этот симптом: разведка идёт в отдельном контекстном окне, а в основной диалог возвращается только сводка. Симптом «начал перечитывать уже прочитанное» — классический признак заполненного окна.
 - B: `/compact` сжимает уже потраченное, то есть лечит по факту. Субагент не даёт контексту заполниться вообще.
 - C: форк копирует диалог и переключает тебя в копию — от разведки в основном окне он не спасает, потому что она уже там.
 - D: `--resume` возобновляет сессию с той же историей, включая всё, что раздуло контекст.
 Источник: https://code.claude.com/docs/en/sub-agents — «A fast, read-only agent optimized for searching and analyzing codebases.» И «Claude delegates to Explore when it needs to search or understand a codebase without making changes. This keeps exploration results out of your main conversation context.»
 Источник: https://code.claude.com/docs/en/best-practices#use-subagents-for-investigation — «Since context is your fundamental constraint, subagents are one of the most powerful tools available. When Claude researches a codebase it reads lots of files, all of which consume your context. Subagents run in separate context windows and report back summaries.»
 
-**41 · C** · TS 3.6. Разница между «где файлы могут лежать» и «что загрузилось сейчас». `/context` показывает второе — раздел Memory files по текущей сессии.
+**41 · C** · TS 3.1. Разница между «где файлы могут лежать» и «что загрузилось сейчас». `/context` показывает второе — раздел Memory files по текущей сессии.
 - B: главная ловушка вопроса. `/memory` перечисляет расположения по областям и позволяет их открыть, причём в списке есть и файлы, которых пока не существует. Загруженность он не подтверждает — документация отправляет за этим именно к `/context`.
 - A: `/doctor` проверяет конфигурацию шире и в том числе предлагает подрезать `CLAUDE.md`, но это не ответ на вопрос «что в этой сессии загрузилось».
 - D: `/init` генерирует файл, то есть меняет предмет диагностики вместо того, чтобы его измерить.
 Источник: https://code.claude.com/docs/en/memory#view-and-edit-with-%2Fmemory — «The `/memory` command lists your CLAUDE.md, CLAUDE.local.md, and other memory file locations across user and project scopes, including user and project CLAUDE.md entries for files that don't exist yet. […] To check which files actually loaded into the current session, run `/context`.»
 Источник: https://code.claude.com/docs/en/memory#claude-isn-t-following-my-claude-md — «Run `/context` and check the list under **Memory files** to verify your CLAUDE.md and CLAUDE.local.md files loaded. If a file is missing there, Claude can't see it.»
 
-**42 · D** · TS 5.4. Возобновление восстанавливает историю целиком — вместе с результатами тулов, то есть вместе с содержимым файлов, каким оно было вчера. Устаревшие данные не помечаются, поэтому расхождение приходится вносить самому, адресно.
+**42 · D** · TS 1.7. Возобновление восстанавливает историю целиком — вместе с результатами тулов, то есть вместе с содержимым файлов, каким оно было вчера. Устаревшие данные не помечаются, поэтому расхождение приходится вносить самому, адресно.
 - A: выводы опирались на файл, которого в этом виде больше нет; «в основном валидно» — предположение, которое условие как раз опровергает.
 - B: перечитать всё, что читалось, — работоспособно, но три изменённых файла известны, и перечитывание сорока лишних возвращает ту же проблему с контекстом.
 - C: выбросить сорок минут корректного анализа из-за трёх файлов.
 Источник: https://code.claude.com/docs/en/sessions#what-a-resumed-session-restores — «Conversation history: the full history, including tool calls and results.»
 
-**43 · A** · TS 3.4. Ветвление копирует диалог до текущей точки и переключает в копию, оставляя оригинал нетронутым. Двукратный форк даёт двум подходам общую базу — те самые сорок минут анализа — и изолированные ветки для сравнения.
+**43 · A** · TS 1.7. Ветвление копирует диалог до текущей точки и переключает в копию, оставляя оригинал нетронутым. Двукратный форк даёт двум подходам общую базу — те самые сорок минут анализа — и изолированные ветки для сравнения.
 - B: два подхода в одном потоке смешивают контексты, и второй разбирается уже под влиянием первого.
 - C: файл с анализом и две чистые сессии работают, но выбрасывают всё, что в анализе не попало в файл.
 - D: `--resume` возвращает в ту же сессию, а не в отдельную ветку; исследование второго подхода ляжет поверх первого.
 Источник: https://code.claude.com/docs/en/sessions#branch-a-session — «Branching creates a copy of the conversation so far and switches you into it, leaving the original intact. Use it to try a different approach without losing the path you were on.»
 Источник: там же — таблица наследования: «Conversation history → Copied into the branch up to the point you ran `/branch`».
 
-**44 · C** · TS 5.6. Определяющая деталь в условии — что именно потерялось: конкретные имена классов сменились родовыми «типовыми паттернами». Так выглядит потеря при сжатии, а не нехватка усердия или места. Значит находки надо было выносить из контекста в файл по мере получения, чтобы к ним можно было вернуться дословно.
+**44 · C** · TS 5.1. Определяющая деталь в условии — что именно потерялось: конкретные имена классов сменились родовыми «типовыми паттернами». Так выглядит потеря при сжатии, а не нехватка усердия или места. Значит находки надо было выносить из контекста в файл по мере получения, чтобы к ним можно было вернуться дословно.
 - D: сводка — документированное общее средство от переполнения, и в другом вопросе была бы верна. Здесь она сжимает то, что уже пострадало от сжатия: сгенерировать точные имена классов из размытой сводки нельзя.
 - A: уровень усердия влияет на рассуждение, а не на то, что в контексте осталось.
 - B: большее окно отодвигает порог, но деградация с заполнением остаётся, и трёхчасовую сессию оно не восстанавливает.
@@ -872,13 +1157,13 @@ Your platform team maintains an assistant that engineers across the company use 
 - C: имя источника в каждой строке раздувает вход и ломает сами клаузулы.
 Источник: https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices — «**Structure document content and metadata with XML tags:** When using multiple documents, wrap each document in `<document>` tags with `<document_content>` and `<source>` (and other metadata) subtags for clarity.»
 
-**48 · A** · TS 4.3. Документация называет приём для длинных документов прямо: сначала попросить процитировать релевантные части, потом делать задачу. Цитата привязывает извлечение к тексту, который в документе действительно есть.
+**48 · A** · TS 4.2. Документация называет приём для длинных документов прямо: сначала попросить процитировать релевантные части, потом делать задачу. Цитата привязывает извлечение к тексту, который в документе действительно есть.
 - B: температура 0 делает вывод детерминированным, а не обоснованным; выдуманное значение будет воспроизводиться стабильно.
 - C: «не галлюцинируй» капсом — инструкция без механизма проверки.
 - D: усердие влияет на глубину рассуждения, но не создаёт привязку к тексту.
 Источник: https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices — «**Ground responses in quotes:** For long document tasks, ask Claude to quote relevant parts of the documents first before carrying out its task. This helps Claude focus on the relevant content and ignore the rest of the document.»
 
-**49 · C** · TS 4.1. Ключевое слово в условии — «eliminate», а не «сократить». Структурированный вывод ограничивает само декодирование схемой, то есть невалидный JSON не может быть сгенерирован. Всё остальное — снижение вероятности.
+**49 · C** · TS 4.3. Ключевое слово в условии — «eliminate», а не «сократить». Структурированный вывод ограничивает само декодирование схемой, то есть невалидный JSON не может быть сгенерирован. Всё остальное — снижение вероятности.
 - A: повтор запроса лечит по факту и стоит второго вызова на каждой пятидесятой записи.
 - B: терпимый парсер восстанавливает синтаксис, но не гарантирует ни типы, ни обязательные поля.
 - D: инструкция и примеры повышают долю валидных ответов, гарантии не дают. Именно эта разница и проверяется.
@@ -888,20 +1173,20 @@ Your platform team maintains an assistant that engineers across the company use 
 Источник: там же — «The `output_format` parameter has moved to `output_config.format`, and beta headers are no longer required.»
 Источник: https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices#migrating-away-from-prefilled-responses — «Starting with Claude 4.6 models […] prefilled responses (providing a partial assistant message for Claude to continue from) on the last assistant turn are no longer supported. Requests with prefilled assistant messages to these models return a 400 error.»
 
-**50 · D** · TS 4.1. Схема гарантирует тип и обязательность поля, но не диапазон — числовые границы `minimum`/`maximum` структурированный вывод не поддерживает. Значит проверка диапазона живёт в коде, принимающем запись, и там же решается, что с ней делать: при отсутствии человека в цикле — отказ и очередь на разбор, а не молчаливая загрузка.
+**50 · D** · TS 4.4. Схема гарантирует тип и обязательность поля, но не диапазон — числовые границы `minimum`/`maximum` структурированный вывод не поддерживает. Значит проверка диапазона живёт в коде, принимающем запись, и там же решается, что с ней делать: при отсутствии человека в цикле — отказ и очередь на разбор, а не молчаливая загрузка.
 - A: заманчиво и неверно ровно из-за этого ограничения. Границы в схеме не действуют, запись пройдёт как валидная, и 9999 попадёт в базу.
 - B: инструкция про диапазон повышает вероятность корректного значения, но ничего не проверяет. Без человека в цикле нужен отказ, а не пожелание.
 - C: второй вызов модели ради сравнения двух чисел — дорогая и менее надёжная замена одной строке в загрузчике.
 - Что схема поддерживает: базовые типы, enum, `const`, `anyOf`/`allOf`, `$ref`, строковые форматы вроде date и uuid, `minItems` со значением 0 или 1. Чего нет: рекурсивные схемы, числовые границы, `minLength`/`maxLength`, ограничения массивов сверх `minItems`, `additionalProperties` кроме `false`, внешние `$ref`.
 Источник: https://platform.claude.com/docs/en/build-with-claude/structured-outputs — раздел ограничений: «Not supported: Recursive schemas, Numerical constraints (`minimum`, `maximum`), String constraints (`minLength`, `maxLength`)…»
 
-**51 · B** · TS 4.1. Две разные функции под две разные задачи: JSON-вывод управляет форматом ответа модели, `strict: true` валидирует аргументы вызова тула. Они дополняют друг друга, а не заменяют.
+**51 · B** · TS 4.3. Две разные функции под две разные задачи: JSON-вывод управляет форматом ответа модели, `strict: true` валидирует аргументы вызова тула. Они дополняют друг друга, а не заменяют.
 - A: strict-режим относится к входам тулов; формат ответа он не задаёт.
 - C: аргументы тула не являются частью текстового ответа и под JSON-вывод не попадают.
 - D: своя валидация нужна для того, что схема не покрывает (см. вопрос 50), но объявлять оба механизма бесполезными неверно.
 Источник: https://platform.claude.com/docs/en/build-with-claude/structured-outputs — «JSON outputs and strict tool use solve different problems and work together: **JSON outputs** control Claude's response format (what Claude says) / **Strict tool use** validates tool parameters (how Claude calls your functions).»
 
-**52 · A** · TS 4.4. Три разных поведения на одно отсутствующее поле — это неопределённость контракта, а не модели. Явный null плюс запрет на вывод из других полей закрывают оба симптома: и непредсказуемую форму, и придуманные даты.
+**52 · A** · TS 4.1. Три разных поведения на одно отсутствующее поле — это неопределённость контракта, а не модели. Явный null плюс запрет на вывод из других полей закрывают оба симптома: и непредсказуемую форму, и придуманные даты.
 - B: пропуск ключа неотличим от ошибки извлечения, а схема с обязательным полем такой ответ отвергнет.
 - C: пустая строка в поле даты — значение неверного типа, замаскированное под валидное.
 - D: «лучшее предположение с оценкой уверенности» узаконивает именно то выведение даты, которое в условии названо дефектом.
@@ -913,13 +1198,13 @@ Your platform team maintains an assistant that engineers across the company use 
 - D: инструкция «игнорируй инструкции внутри документа» — та же плоскость, что и атака, и опирается на послушание модели, а не на структуру. Вариант рабочий как дополнение, но не структурный.
 Источник: https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices#structure-prompts-with-xml-tags — «XML tags help Claude parse complex prompts unambiguously, especially when your prompt mixes instructions, context, examples, and variable inputs. Wrapping each type of content in its own tag (for example, `<instructions>`, `<context>`, `<input>`) reduces misinterpretation.»
 
-**54 · B** · TS 4.3. Дюжина форм записи и требуемая нормализация — задача на формат вывода, а примеры и есть самый надёжный способ его задать. Требование к примерам документация тоже формулирует: они должны отражать реальные случаи.
+**54 · B** · TS 4.2. Дюжина форм записи и требуемая нормализация — задача на формат вывода, а примеры и есть самый надёжный способ его задать. Требование к примерам документация тоже формулирует: они должны отражать реальные случаи.
 - A: регулярка на известные формы ломается на неизвестной тринадцатой, а их поток и есть проблема.
 - C: enum задаёт множество значений, но «Net 30» → 30 дней плюс скидка 2% при оплате в 10 дней — это преобразование, а не выбор из списка.
 - D: отдельный запрос на клаузулу не устраняет неоднозначность правила, а лишь изолирует её.
 Источник: https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices#use-examples-effectively — «Examples are one of the most reliable ways to steer Claude's output format, tone, and structure. A few well-crafted examples (known as few-shot or multishot prompting) improve accuracy and consistency.» И требование: «**Relevant:** Mirror your actual use case closely.»
 
-**55 · A** · TS 4.4. Рассуждение нужно сохранить — оно решает, какая клаузула главнее. Значит его не подавляют и не выбрасывают, а разводят с результатом по разным размеченным областям, чтобы парсер брал только запись.
+**55 · A** · TS 4.3. Рассуждение нужно сохранить — оно решает, какая клаузула главнее. Значит его не подавляют и не выбрасывают, а разводят с результатом по разным размеченным областям, чтобы парсер брал только запись.
 - B: «рассуждай молча» отбирает у модели то, что в этом случае улучшает ответ.
 - C: срезать всё до первой `{` — хрупкая эвристика: фигурная скобка встречается и в тексте рассуждения.
 - D: два запроса работают, но выбрасывание рассуждения лишает тебя обоснования по спорным контрактам, а его как раз стоит логировать.
@@ -932,13 +1217,13 @@ Your platform team maintains an assistant that engineers across the company use 
 - C: рекурсивные схемы структурированным выводом не поддерживаются, то есть такая схема была бы отвергнута при отправке, а не привела к обрыву.
 Источник: https://platform.claude.com/docs/en/build-with-claude/structured-outputs — раздел ограничений (рекурсивные схемы не поддерживаются) и гарантии, которые не отменяют лимита на длину вывода.
 
-**57 · C** · TS 1.5. Признаки батча совпадают все: объём большой, дедлайн в неделях, ответ никто не ждёт. Интерактивный путь при этом остаётся на обычных запросах, потому что там ждёт человек.
+**57 · C** · TS 4.5. Признаки батча совпадают все: объём большой, дедлайн в неделях, ответ никто не ждёт. Интерактивный путь при этом остаётся на обычных запросах, потому что там ждёт человек.
 - A: прогнать 40 тысяч документов через интерактивный путь — конкуренция за те же лимиты с живыми запросами.
 - B: максимальная конкурентность выжимает лимиты и деградирует интерактивный путь ровно тогда, когда он нужен.
 - D: кеширование системного промпта уместно и там и там, но объём работы и её приоритет не меняет.
 - ⚠️ Про батч в блюпринте есть неверное утверждение — будто многоходовые вызовы тулов в батч не отправляются. Документация перечисляет tool use и многоходовые диалоги как поддерживаемые. Вопросов на это здесь нет; знай, что окно исполнения — до 24 часов, и это единственный аргумент против батча в интерактивном сценарии.
 
-**58 · B** · TS 1.6. Проверка в том же ответе выполняется той же моделью, что только что извлекла поля, — она оценивает свою работу, имея в контексте своё же решение. Отдельный вызов сверяет запись с контрактом заново.
+**58 · B** · TS 4.6. Проверка в том же ответе выполняется той же моделью, что только что извлекла поля, — она оценивает свою работу, имея в контексте своё же решение. Отдельный вызов сверяет запись с контрактом заново.
 - A: перестановка порядка не убирает совмещение ролей и требует флагов до того, как есть что флажить.
 - C: обоснование к флагу улучшает читаемость флага, но не его надёжность.
 - D: ограничения БД поймают нарушение типа и диапазона, но не внутреннюю противоречивость условий контракта.
@@ -992,12 +1277,13 @@ Your platform team maintains an assistant that engineers across the company use 
 - D: инструкция «звать аккуратно» не даёт агенту средства сузить запрос.
 Источник: https://platform.claude.com/docs/en/agents-and-tools/tool-use/define-tools#best-practices-for-tool-definitions — принцип: тул возвращает то, что нужно для решения, а параметры задают границы выборки.
 
-**66 · C** · TS 2.4. Одобрения, закоммиченные в репозиторий, не действуют, пока рабочая папка не доверена: свежий клон не может одобрить сам себя. Пока доверие не подтверждено, сервер остаётся в «Pending approval».
-- A: `claude mcp reset-project-choices` сбрасывает уже сделанный выбор — это обратная операция.
-- B: project scope поддерживается давно, и симптом «сервер виден, но ждёт одобрения» как раз говорит, что `.mcp.json` прочитан.
-- D: одобрение запрашивается один раз, а не каждую сессию.
-Источник: https://code.claude.com/docs/en/mcp — «A cloned repository can't approve its own servers: `enableAllProjectMcpServers` or `enabledMcpjsonServers` committed to the project's `.claude/settings.json` is ignored in an untrusted folder, and the server stays at `⏸ Pending approval` instead of being connected and health-checked.»
-Источник: там же — «For security reasons, Claude Code prompts for approval in interactive sessions before using project-scoped servers from `.mcp.json` files.»
+**66 · C** · TS 2.3. Из четырёх значений `tool_choice` гарантию «именно этот тул» даёт только указание тула по имени. Цена названа в документации прямо: при `any` и `tool` API подставляет начало ответа ассистента, поэтому текстового пояснения перед вызовом не будет — даже если попросить.
+- A: `auto` оставляет решение модели, а условие требует гарантии. Описание тула повышает вероятность, но это и есть текущее поведение, которое подводит.
+- B: `any` заставляет вызвать **какой-то** тул, но не этот. При одном туле совпадёт, при двух — нет.
+- D: `strict: true` — про валидацию схемы входа, а не про принуждение к вызову. Путаница этих двух механизмов — самая частая ошибка здесь; их как раз и комбинируют, когда нужны обе гарантии сразу.
+- Если пояснение перед вызовом нужно сохранить, документация предлагает обратный путь: оставить `auto` и потребовать вызов инструкцией в пользовательском сообщении.
+Источник: https://platform.claude.com/docs/en/agents-and-tools/tool-use/define-tools — «`auto` allows Claude to decide whether to call any provided tools or not. […] `any` tells Claude that it must use one of the provided tools, but doesn't force a particular tool. `tool` forces Claude to always use a particular tool. `none` prevents Claude from using any tools.»
+Источник: https://platform.claude.com/docs/en/agents-and-tools/tool-use/define-tools — «when you have `tool_choice` as `any` or `tool`, the API prefills the assistant message to force a tool to be used. This means that the models will not emit a natural language response or explanation before `tool_use` content blocks, even if explicitly asked to do so.»
 
 **67 · B** · TS 2.4. Промпты MCP-сервера появляются в списке команд по `/` с именем вида `/mcp__<сервер>__<промпт>`, и вызываются напрямую — ровно то, что просят инженеры.
 - A: так работают тулы, а не промпты; выбор остаётся за моделью, и «вызвать напрямую» не получается.
@@ -1017,40 +1303,40 @@ Your platform team maintains an assistant that engineers across the company use 
 - Связь с вопросом 51: `strict: true` на туле добавляет к enum гарантию, что схема будет соблюдена при декодировании.
 Источник: https://platform.claude.com/docs/en/build-with-claude/structured-outputs — «**Strict tool use** (`strict: true`): Guarantee schema validation on tool names and inputs». Поддерживаемые конструкции включают `enum` и `const`.
 
-**70 · B** · TS 3.4. Поле `tools` в определении субагента перечисляет доступные ему тулы. Нет `Edit` и `Write` в списке — изменить файл он не может, независимо от того, что решит.
+**70 · B** · TS 2.3. Поле `tools` в определении субагента перечисляет доступные ему тулы. Нет `Edit` и `Write` в списке — изменить файл он не может, независимо от того, что решит.
 - A: системный промпт задаёт поведение, а не права. Ровно та же разница, что в вопросе 64.
 - C: модель влияет на качество разбора, не на права.
 - D: `description` определяет, когда Claude делегирует агенту задачу, — это маршрутизация, не ограничение.
 Источник: https://code.claude.com/docs/en/best-practices#create-custom-subagents — пример определения с `tools: Read, Grep, Glob, Bash`; «Subagents run in their own context with their own set of allowed tools.»
 
-**71 · C** · TS 3.5. Требование «после каждой правки, без исключений» — детерминированное, а `CLAUDE.md` детерминизма не даёт по своей природе. Хук выполняется скриптом в фиксированной точке жизненного цикла.
+**71 · C** · TS 1.5. Требование «после каждой правки, без исключений» — детерминированное, а `CLAUDE.md` детерминизма не даёт по своей природе. Хук выполняется скриптом в фиксированной точке жизненного цикла.
 - A: капс и «YOU MUST» действительно повышают адгезию, и документация это упоминает, — но одна пропущенная правка из десяти остаётся возможной.
 - B: правило с `paths` меняет момент загрузки инструкции, но инструкция остаётся рекомендацией.
 - D: скилл надо позвать, а условие требует срабатывания на каждой правке.
 Источник: https://code.claude.com/docs/en/memory#claude-isn-t-following-my-claude-md — «If the instruction is something that must run at a specific point, such as before every commit or after each file edit, write it as a hook instead. Hooks execute as shell commands at fixed lifecycle events and apply regardless of what Claude decides.»
 
-**72 · A** · TS 3.4. Коллизии правок — про файловую систему, и worktree даёт каждой сессии свой рабочий каталог на своей ветке. Документация называет это назначением механизма прямо.
+**72 · A** · TS 1.7. Коллизии правок — про файловую систему, и worktree даёт каждой сессии свой рабочий каталог на своей ветке. Документация называет это назначением механизма прямо.
 - B: `/branch` ветвит **диалог**, а не рабочую копию. Файлы остаются общими, и правки продолжат сталкиваться. Самая частая подмена в этом вопросе.
 - C: четыре клона решают задачу, но это ручная работа вместо встроенного механизма, и синхронизация через remote добавляет цикл.
 - D: команды агентов координируют сессии и общие задачи, но не сериализуют правки в одном рабочем каталоге.
 Источник: https://code.claude.com/docs/en/sessions — «Worktrees: run isolated parallel sessions on separate branches».
 Источник: https://code.claude.com/docs/en/best-practices#run-multiple-claude-sessions — «Worktrees: run separate CLI sessions in isolated git checkouts so edits don't collide».
 
-**73 · D** · TS 1.6. Документация формулирует причину дословно: без проверки, которую агент может запустить сам, «выглядит готовым» — единственный доступный ему сигнал. Значит нужен сигнал pass/fail и требование итерировать до его прохождения.
+**73 · D** · TS 4.4. Документация формулирует причину дословно: без проверки, которую агент может запустить сам, «выглядит готовым» — единственный доступный ему сигнал. Значит нужен сигнал pass/fail и требование итерировать до его прохождения.
 - A: перечитать изменённые файлы не выявит два места, которые никто не менял; проверять надо все одиннадцать.
 - B: инструкция в `CLAUDE.md` — контекст, а не проверка, и «полностью сделано» она не определяет.
 - C: усердие не заменяет критерий завершённости.
 - Уровни принуждения по возрастанию: проверка в самом промпте → условие `/goal`, которое переоценивается после каждого хода → `Stop`-хук, который блокирует завершение хода, пока скрипт не пройдёт.
 Источник: https://code.claude.com/docs/en/best-practices#give-claude-a-way-to-verify-its-work — «Claude stops when the work looks done. Without a check it can run, "looks done" is the only signal available, and you become the verification loop… Give Claude something that produces a pass or fail, and the loop closes on its own.»
 
-**74 · B** · TS 1.4. Нужен ответ, а не файлы, и сразу после этого — реализация. Субагент читает сорок файлов в своём окне и возвращает сводку, оставляя основной контекст под реализацию.
+**74 · B** · TS 5.4. Нужен ответ, а не файлы, и сразу после этого — реализация. Субагент читает сорок файлов в своём окне и возвращает сводку, оставляя основной контекст под реализацию.
 - A: `/compact` сжимает уже потраченное, то есть разведка успевает занять окно.
 - C: сужение до пяти файлов за раз не отвечает на вопрос, который требует всех сорока.
 - D: отдельная сессия с копипастом работает, но теряет всё, что не попало в вставленный текст, и добавляет ручной шаг — тогда как субагент отдаёт результат прямо в этот же диалог.
 Источник: https://code.claude.com/docs/en/best-practices#use-subagents-for-investigation — «When Claude researches a codebase it reads lots of files, all of which consume your context. Subagents run in separate context windows and report back summaries.»
 Источник: https://code.claude.com/docs/en/best-practices — про «The infinite exploration»: «**Fix**: Scope investigations narrowly or use subagents so the exploration doesn't consume your main context.»
 
-**75 · C** · TS 1.6. Причина структурная: проверяющий видит рассуждение, которое породило код, и потому оценивает не результат, а свой же путь к нему. Свежий контекст устраняет именно это смещение.
+**75 · C** · TS 4.6. Причина структурная: проверяющий видит рассуждение, которое породило код, и потому оценивает не результат, а свой же путь к нему. Свежий контекст устраняет именно это смещение.
 - A: отдельный тип агента полезен, но дело не в типе задачи — тот же агент в чистом контексте отработает.
 - B: заполненный контекст ухудшает работу вообще, но объяснение симптома «нашёл ноль замечаний» здесь другое.
 - D: уровень усердия не создаёт независимости оценки.
@@ -1058,27 +1344,259 @@ Your platform team maintains an assistant that engineers across the company use 
 Источник: https://code.claude.com/docs/en/best-practices#run-multiple-claude-sessions — «A fresh context improves code review since Claude won't be biased toward code it just wrote.»
 Источник: https://code.claude.com/docs/en/best-practices#add-an-adversarial-review-step — «A reviewer running in a fresh subagent context sees only the diff and the criteria you give it, not the reasoning that produced the change, so it evaluates the result on its own terms.»
 
+## Сценарий 6 — разбор
+
+**76 · B** · TS 3.6. `--bare` отключает автообнаружение — хуки, скиллы, команды, субагенты, плагины, MCP-серверы, авто-память и `CLAUDE.md`. Именно поэтому документация называет его рекомендуемым для скриптов и CI: результат перестаёт зависеть от того, что лежит на конкретной машине.
+- A: модель фиксировать полезно, но личный хук коллеги влияет на прогон независимо от модели.
+- C: `dontAsk` управляет разрешениями, а не тем, какая конфигурация подгрузилась.
+- D: `settings.json` в репозитории не отменяет пользовательские хуки в `~/.claude`, а складывается с ними.
+- Важное следствие: в `--bare` не читаются OAuth-креденшелы и системный keychain, поэтому для Claude API нужен `ANTHROPIC_API_KEY` в окружении. Подписочный вход в bare-режиме не работает.
+Источник: https://code.claude.com/docs/en/headless — «Add `--bare` to reduce startup time by skipping auto-discovery of hooks, skills, custom commands, subagents, plugins, MCP servers, auto memory, and CLAUDE.md.» И «Bare mode is useful for CI and scripts where you need the same result on every machine.»
+
+**77 · D** · TS 3.6. Ответ контринтуитивный и поэтому важный: хуки из настроек проекта **выполняются**, и причина именно в том, что `-p` не может показать диалог доверия. Отсутствие диалога здесь не защищает, а снимает преграду. То же касается серверов из `.mcp.json` — их некому одобрять, и они подключаются.
+- A: «недоверенная папка отключает настройки» — так работает интерактивный режим, но не `-p`.
+- B: перевёрнутая логика. Невозможность показать диалог не равна игнорированию.
+- C: `-p` не блокируется на диалоге, он его не показывает вовсе.
+- Что с этим делать: `--bare` для прогонов на непроверенном коде, и он же ответ на вопрос 76. Один флаг закрывает и воспроизводимость, и этот класс риска.
+Источник: https://code.claude.com/docs/en/headless — «Without `--bare`, Claude Code runs the hooks in a project's `.claude/settings.json` even in a folder you've never trusted, because a `-p` session shows no workspace trust dialog. It also connects the servers in the project's `.mcp.json`, because a `-p` session can't show the per-server approval prompt either.»
+
+**78 · A** · TS 3.6. Решение принимает workflow, значит нужен машиночитаемый вердикт: схема задаёт форму, результат приходит в отдельном поле, и по нему ветвится шаг.
+- B: grep по слову в свободном тексте — контракт, который сломается на первой перефразировке.
+- C: заставлять агента вызывать `exit 1` — смешение роли: он должен сообщить вердикт, а решать судьбу сборки должен пайплайн. Плюс это требует ему Bash.
+- D: комментарий и обязательный ревьюер возвращают человека в цикл, который в условии просили исключить.
+Источник: https://code.claude.com/docs/en/headless — «To get output conforming to a specific schema, use `--output-format json` with `--json-schema` and a JSON Schema definition. The response includes metadata about the request (session ID, usage, etc.) with the structured output in the `structured_output` field.»
+
+**79 · C** · TS 3.6. `dontAsk` — единственный из вариантов, который задаёт **базовый уровень отказа**: запрещено всё, кроме явных allow-правил и набора read-only команд. Новый тул, появившийся в промпте, по умолчанию не пройдёт.
+- A: перечислить нужные тулы правильно и необходимо, но это allow-список без базового отказа; вопрос был про baseline.
+- B: `acceptEdits` наоборот **разрешает** записи без запроса, а не ограничивает.
+- D: контейнер изолирует хост, но внутри него агент по-прежнему делает что угодно из разрешённого.
+Источник: https://code.claude.com/docs/en/headless — «**`dontAsk`**: Claude Code denies anything not in your `permissions.allow` rules or the read-only command set, which is useful for locked-down CI runs.»
+
+**80 · B** · TS 3.6. Код возврата — ноль при успехе, не ноль при провале прогона. Это то, на чём должен ветвиться скрипт, и именно этой проверки в условии не было.
+- A: сообщение об ошибке действительно печатается как результат в stdout, и это ловушка: искать его строкой можно, но контракт хрупкий, а код возврата уже есть.
+- C: файл сессии пишется и при неудачных прогонах.
+- D: `total_cost_usd` — оценка расходов, а не индикатор успеха; она к тому же клиентская и расходится с биллингом.
+- Отдельно стоит помнить: SIGTERM даёт код 143, и незавершённый ход остаётся незавершённым — при возобновлении сессии он продолжится.
+Источник: https://code.claude.com/docs/en/headless — «Claude Code exits with code 0 on success and a non-zero code when the run fails, so your scripts can branch on the exit status.» И «When a failure happens inside the run, such as missing authentication, Claude Code prints the failure as the result on stdout.»
+
+**81 · A** · TS 3.5. Итеративная доработка сходится, когда у агента есть проверка, которую он может запустить сам. Имя падающего теста и его вывод — это сигнал pass/fail; «почини как надо» — нет.
+- B: капс и «IMPORTANT» повышают адгезию к инструкции, но инструкция здесь и не была проблемой.
+- C: третья редакция прозы — то же средство, которое дважды не сработало.
+- D: попросить объяснить реализацию полезно для диагностики, но это ещё один цикл без критерия завершённости.
+Источник: https://code.claude.com/docs/en/best-practices#give-claude-a-way-to-verify-its-work — «Claude stops when the work looks done. Without a check it can run, "looks done" is the only signal available… Give Claude something that produces a pass or fail, and the loop closes on its own.»
+
+**82 · C** · TS 3.5. Документация даёт здесь прямое числовое правило: после двух неудачных исправлений контекст засорён провальными подходами, и чистая сессия с более точным промптом почти всегда обгоняет длинную с накопленными правками.
+- A: «повторить достаточно раз» — описание ровно того цикла, который в условии уже провалился трижды.
+- B: смена модели в том же диалоге тащит за собой тот же засорённый контекст.
+- D: сжатие сохранит и сами провальные подходы в виде сводки; предписано начать заново, а не сжать.
+Источник: https://code.claude.com/docs/en/best-practices#course-correct-early-and-often — «If you've corrected Claude more than twice on the same issue in one session, the context is cluttered with failed approaches. Run `/clear` and start fresh with a more specific prompt that incorporates what you learned. A clean session with a better prompt almost always outperforms a long session with accumulated corrections.»
+
+**83 · D** · TS 3.1. Критерий отбора документация формулирует прямо: выбрасывается то, что Claude может вывести сам, — раскладка каталогов, перечни зависимостей, обзоры архитектуры; остаётся то, что он не угадает. А в CI это дороже, чем локально, потому что файл читается на каждом прогоне.
+- A: правила с `paths` — верный инструмент, но для инструкций, привязанных к файлам; каталоговая опись не станет уместнее от того, что загрузится позже.
+- B: импорты разворачиваются при запуске целиком, контекст они не экономят. Формулировка «спреды по нескольким загрузкам» неверна.
+- C: «однократная цена» неверно вдвойне: файл входит в каждый запрос прогона, а не только в первый.
+Источник: https://code.claude.com/docs/en/github-actions#manage-costs — «Keep your `CLAUDE.md` concise, since Claude reads it on every run».
+Источник: https://code.claude.com/docs/en/memory#my-claude-md-is-too-large — «The `/doctor` checkup proposes trims for a checked-in CLAUDE.md: it cuts content Claude can derive from the codebase, such as directory layouts, dependency lists, and architecture overviews, and keeps pitfalls, rationale, and conventions that differ from tool defaults.»
+
+**84 · B** · TS 3.2. Вход `prompt` принимает вызов скилла наравне с текстом. Для скилла из репозитория нужен checkout **до** шага действия, иначе файлов на раннере ещё нет.
+- A: вставленное тело скилла разойдётся с файлом при первом же изменении последнего — два источника правды.
+- C: путь к файлу не является поддерживаемой формой вызова.
+- D: автоматически скиллы не применяются: в режиме автоматизации агент исполняет то, что задано в `prompt`.
+Источник: https://code.claude.com/docs/en/github-actions#run-a-skill — «For a skill in your repository's `.claude/skills/` directory, run `actions/checkout` before the `anthropics/claude-code-action` step so the skill files are available on the runner, then pass `/skill-name` as the `prompt`.»
+
+**85 · C** · TS 3.3. Требование двойное: запрет должен действовать и ничего не стоить, когда не применяется. Это и есть правило с `paths` — оно попадает в контекст только когда Claude работает с подходящими файлами.
+- A: запрет в `CLAUDE.md` действует, но грузится всегда, а условие требует нулевой цены на остальных прогонах.
+- B: `.gitignore` управляет отслеживанием в git, а не доступом инструментов к файлам на диске.
+- D: убрать `Edit` из allow-списка запретит правки **везде**, а не только в `gen/`.
+Источник: https://code.claude.com/docs/en/memory#path-specific-rules — «Rules can be scoped to specific files using YAML frontmatter with the `paths` field. These conditional rules only apply when Claude is working with files matching the specified patterns.»
+
+**86 · A** · TS 2.5. `Grep` построен на ripgrep и предназначен ровно для этого; его результаты интегрированы с механизмом разрешений и ссылками на файлы. Наличие Bash не делает поиск через оболочку предпочтительным.
+- B: «меньше вызовов» — ложная экономия: вывод `grep -r` по 4000 файлам попадёт в контекст целиком, тогда как у `Grep` есть режимы вывода и лимиты.
+- C: читать файлы-кандидаты, чтобы найти вызовы, — перебор вместо поиска.
+- D: `Glob` находит файлы по имени, а искать надо по содержимому; последовательный Bash по каждому файлу — самый дорогой из вариантов.
+
+**87 · D** · TS 2.5. `Edit` требует, чтобы файл был прочитан в этой сессии, — иначе вызов отклоняется до всякой записи. Симптом «путь верный, файл есть, но падает сразу» указывает именно на это.
+- A: режим разрешений отклонил бы вызов, но тогда падали бы все правки, а не первая.
+- B: исключения по «сгенерированности» пути не существует.
+- C: коллизия двух правок в одном ходе — другой сценарий и другая ошибка.
+
+**88 · B** · TS 2.5. Все три вхождения требуют одного и того же изменения — это ровно случай `replace_all`.
+- A: перезапись файла целиком через `Write` решает задачу, но рискует всем остальным содержимым; это резервный путь, а не первый.
+- C: три правки с расширенным контекстом — рабочий вариант, когда изменения **разные**; здесь он лишняя работа.
+- D: `sed -i` уводит правку из инструментов редактирования, а значит из механизма чекпойнтов — `/rewind` такую правку не отменит.
+- ⚠️ Расхождение: blueprint на неуникальный якорь предписывает `Read` + `Write`. Текущая документация — удлинить якорь либо `replace_all`. Вопрос сформулирован так, что верен ответ по документации; если формулировка на экзамене будет про «что делать при неуникальном якоре» без уточнения про одинаковые изменения, держи в голове версию гайда.
+
+**89 · C** · TS 1.1. Разделение понятий: `--max-turns` — потолок бюджета, а завершение цикла определяется причиной остановки в ответе модели. Одно ограничивает расход, другое отвечает на вопрос «работа закончена или нет».
+- A и B: назвать потолок условием завершения — подмена, из-за которой прогон, упёршийся в лимит, принимают за выполненную работу.
+- D: `--max-turns` передаётся в `claude_args` и действует в неинтерактивных прогонах — утверждение об игнорировании ложно.
+Источник: https://code.claude.com/docs/en/github-actions#pass-cli-arguments — «`--max-turns`: limit the number of conversation turns».
+
+**90 · A** · TS 1.1. Цикл продолжается, пока причина остановки говорит о вызове тула, и завершается на любом другом значении. Проверять надо именно это поле, а не текст ответа.
+- B: разбор текста на «похоже, закончил» — то, от чего механизм причины остановки и избавляет.
+- C: фиксированное число итераций — бюджет, а не условие завершения (см. вопрос 89).
+- D: `end_turn` — не единственный выход. Значений несколько, и выходить надо на любом не-tool-use, иначе цикл повиснет на отказе или на упёршемся в лимит ответе.
+- ⚠️ Расхождение: гайд описывает выход как «`end_turn` против `tool_use`», то есть два значения. Документация перечисляет больше, включая `max_tokens`, `pause_turn` и `refusal`. Правило «продолжать только на `tool_use`» верно в обеих версиях — на нём и стой.
+
+## Сценарий 7 — разбор
+
+**91 · B** · TS 1.2. Задача координатора — разобрать требования запроса и выбрать, кого звать. Полный конвейер на запрос одной цифры — работа, которой не должно быть, а не работа, которую надо ускорить.
+- A: кеш помогает повторам, а ad-hoc запросы каждый раз про новое.
+- C: параллелизация сокращает время лишних стадий, но не отменяет их.
+- D: дешёвая модель на ненужной стадии экономит на том, чего делать не надо.
+
+**92 · D** · TS 1.3. Субагент стартует с изолированным контекстом: транскрипт координатора он не видит. «Проверь цифры, которые получили агенты извлечения» — ссылка на то, чего в его промпте нет.
+- A: последовательность не при чём; даже дождавшись всех, координатор обязан передать результат явно.
+- B: дело не в отсутствующем туле, а в отсутствующих данных в промпте.
+- C: обрезка по длине дала бы часть цифр, а не ноль.
+
+**93 · A** · TS 1.4. Требование «никогда до прохождения сверки» — это предусловие, и оно ставится в коде: тул подачи заблокирован, пока сверка не вернула успех. Инструкции — контекст, а условие сформулировано как абсолютное.
+- B: усиленная инструкция — то же средство, которое уже дважды не сработало.
+- C: напоминание перед попыткой опирается на послушание модели там, где нужен запрет.
+- D: отзыв поданной отчётности — устранение последствий события, о котором в условии сказано, что оно отчётное.
+
+**94 · C** · TS 1.6. Известный заранее набор разделов — фиксированная последовательность проходов. Расследование, где следующий шаг определяется предыдущей находкой, — адаптивная декомпозиция.
+- A: одинаковая форма результата не делает путь к нему одинаковым.
+- B: перевёрнутое сопоставление, самый частый способ ошибиться здесь.
+- D: разнородность источников усложняет извлечение, но набор разделов отчёта задан регулятором и от неё не зависит.
+
+**95 · B** · TS 1.7. Восстановление после падения требует состояния вне контекста: каждый агент выгружает результат в известное место, координатор при возобновлении читает манифест и знает, что уже сделано.
+- A: увеличенное окно не переживает падения процесса.
+- C: полные транскрипты в контексте координатора — тот перерасход, ради устранения которого агентов и разделяли, и они теряются вместе с ним.
+- D: один агент на всё убирает изоляцию контекста и не даёт точки восстановления.
+
+**96 · A** · TS 1.2. Схема «звезда» существует ради наблюдаемости, единой обработки ошибок и контроля над потоком информации. Прямые вызовы между агентами всё это теряют.
+- B: технически прямой вызов организуем; возражение архитектурное, а формулировка «невозможно» неверна.
+- C: интерпретация чужого запроса — не главная проблема, теряется контроль.
+- D: два агента с одной цифрой в контексте — норма, а не противоречие.
+
+**97 · C** · TS 1.4. Handoff несёт структурированный результат, а не историю получения: цифра, документ-источник, дата. Это ровно то, что нужно сверке, и ничего лишнего.
+- A: указатель на транскрипт перекладывает разбор истории на сверку, то есть ту же работу, только позже.
+- B: «последние двадцать сообщений» — эвристика, которая молча потеряет цифру, оказавшуюся двадцать первой.
+- D: пересказ своими словами теряет точные значения, а именно они здесь и есть предмет.
+
+**98 · D** · TS 5.6. Атрибуция теряется на шаге сжатия, поэтому связки «утверждение — источник» создаются выше по потоку и проходят через составление текста неизменными.
+- A: отдельный проход «навесить ссылки» адресован тексту, в котором их уже нет; их придётся реконструировать.
+- B: полные документы позволяют искать, но не связывают конкретное утверждение с конкретной цифрой.
+- C: карта в контексте координатора не доезжает до ревьюера и живёт только до конца прогона.
+
+**99 · A** · TS 4.5. Все признаки батча совпадают: объём большой, срок в неделях, ответа никто не ждёт. Интерактивный путь при этом остаётся на обычных запросах, потому что там ждёт человек.
+- B: один код-путь ценен, но 8000 документов через интерактивный путь конкурируют за лимиты с живыми запросами.
+- C: максимальная конкурентность выжимает лимиты именно тогда, когда аналитикам нужен ответ.
+- D: отправить в батч и интерактивные обращения — ошибка ровно того рода, о которой вопрос 100.
+
+**100 · C** · TS 4.5. Решает окно исполнения: до 24 часов. Для человека, ждущего ответ за рабочим столом, этого достаточно, чтобы вариант отпал, независимо от цены.
+- A: **ложное утверждение, и это намеренная ловушка.** Гайд говорит, что батч не поддерживает многоходовые вызовы тулов; текущая документация перечисляет tool use и многоходовые диалоги как поддерживаемые. На таком расхождении ответ не строят — поэтому верным сделан аргумент про окно, который верен в обеих версиях.
+- B: результаты действительно приходят в произвольном порядке, и сопоставлять их надо по `custom_id` — но это решаемая техническая деталь, а не причина отказа.
+- D: минимального числа запросов для батч-цены не существует.
+
+**101 · B** · TS 4.6. Агент, оценивающий свою же арифметику, имеет в контексте собственное решение и потому проверяет не результат, а свой путь к нему. Отдельный проход сверяет вычисленное с источником заново.
+- A: обоснование к флагу улучшает читаемость флага, а не его надёжность.
+- C: перестановка порядка не убирает совмещение ролей и требует сомнений до того, как есть в чём сомневаться.
+- D: полагаться на человека — ровно то, что уже привело к ошибке в отчётности (см. вопрос 103).
+
+**102 · D** · TS 4.1. Две части задачи требуют двух средств: схема с ограниченным декодированием гарантирует форму, примеры «вход → выход» задают само преобразование для реальных вариантов записи.
+- A: терпимый парсер разбирает известные варианты и сломается на неизвестном сорок первом — а их поток и есть проблема.
+- B: инструкция про каноническую форму повышает вероятность, гарантии не даёт.
+- C: отбраковка на повторное извлечение — рабочий резерв, но это второй вызов вместо первого верного.
+
+**103 · A** · TS 5.5. Ревью в 400 позиций за квартал, где почти всё рутина, вырождается в формальность — это и произошло. Внимание человека направляют туда, где система сама сомневается, а рутину покрывают выборкой.
+- B: «проверять всё» звучит безопасно, но именно исчерпывающее ревью и деградировало до штампа; это описание проблемы, а не решения.
+- C: случайная выборка без приоритизации тратит внимание на рутину с той же вероятностью, что и на сомнительное.
+- D: перенести ревью с цифр на текст — уход от того, что подаётся регулятору как факт.
+
+**104 · B** · TS 5.5. Самооценка уверенности — это число, пока её не сопоставили с фактическими исходами. Без калибровки порог 7 произволен: неизвестно, что означает «6» на практике.
+- A: гранулярность шкалы второстепенна; проблема в отсутствии привязки к реальности, а не в числе градаций.
+- C: перенастройка порога — следствие той же непрокалиброванности, а не отдельная слабость.
+- D: несравнимость между агентами существует, но здесь агент один.
+
+**105 · B** · TS 5.3. Структурированная ошибка с указанием, что именно не удалось и повторяемо ли это, даёт координатору основание решать: повторить, пойти иначе или отчитаться о пробеле. Пустой успех — молчаливое подавление ошибки, и в отчётности он превратился в ноль.
+- A: цикл повторов не устранит проблему прав и задержит прогон.
+- C: остановить весь прогон из-за одной подсистемы — потеря работы; решение об остановке принимает координатор, получив ошибку.
+- D: цифры прошлого квартала с пометкой — фабрикация данных под видом пометки, худший из вариантов в отчётности.
+
+---
+
+## Домен 6 — разбор
+
+**106 · B** · PC 1. Кеш — совпадение префикса по байтам, а метка времени стоит в первой строке. Каждый запрос строит новый префикс, и совпасть ему не с чем. Ошибок при этом не возвращается — счётчик чтений просто остаётся нулевым, и это главный диагностический признак.
+- A: расположение метки важно, но при меняющемся содержимом правильное расположение ничего не спасёт.
+- C: 6000 токенов выше любого из минимумов, при которых запись пропускается.
+- D: истечение срока давало бы промахи при редких запросах, а здесь их тысячи и ноль абсолютный.
+Источник: https://platform.claude.com/docs/en/build-with-claude/prompt-caching — «Cache hits require 100% identical prompt segments, including all text and images up to and including the block marked with cache control.»
+
+**107 · C** · PC 2. Стабильное раньше, изменчивое позже: динамика ставится после последней точки кеширования, и всё, что до неё, продолжает читаться из кеша.
+- A: верх системного промпта — худшее место, оттуда изменение обнуляет весь префикс.
+- B: описания тулов — самый первый уровень префикса, изменение там дороже всего.
+- D: динамика и кеширование сочетаются штатно, вопрос только в порядке.
+Источник: https://platform.claude.com/docs/en/build-with-claude/prompt-caching — «For a prompt with a static prefix and a varying suffix (timestamps, per-request context, the incoming message), place the breakpoint at the end of the static prefix, not on the varying block.»
+
+**108 · A** · PC 3. Кеш платит за себя повторным чтением одного и того же префикса. Общего здесь два предложения — этого не хватит даже на минимальный размер записи, а документ каждый раз новый.
+- B: кешируется префикс запроса, а не документы как содержимое.
+- C: «бесплатно, когда запись есть» неверно: запись платная, и двух предложений на неё не хватит.
+- D: сортировка сближает похожие документы, а кеш требует побайтового совпадения, не похожести.
+Источник: https://platform.claude.com/docs/en/build-with-claude/prompt-caching — «Shorter prompts cannot be cached, even if marked with `cache_control`. Any requests to cache fewer than this number of tokens will be processed without caching, and no error is returned.»
+
+**109 · D** · PC 4. Запись на сроке по умолчанию — 1.25× базовой цены входа, чтение — 0.1×. Два запроса: 1.25 + 0.1 = 1.35 против 2.0 без кеша. Окупается со второго обращения.
+- A: запись дороже обычного запроса, а не равна ему.
+- B: надбавка — четверть базовой цены, а не кратность.
+- C: на часовом сроке запись стоит 2×, и окупаемость наступает позже, примерно с третьего обращения. Часовой вариант нужен для трафика с провалами, а не для быстрой окупаемости — вариант переворачивает соотношение.
+Источник: https://platform.claude.com/docs/en/build-with-claude/prompt-caching — «5-minute cache write tokens are 1.25 times the base input tokens price», «1-hour cache write tokens are 2 times the base input tokens price», «Cache read tokens are 0.1 times the base input tokens price».
+
+**110 · B** · PC 5. Префикс собирается в порядке `tools` → `system` → `messages`, и изменение на уровне обнуляет этот уровень и все следующие. Тулы — первый, поэтому один добавленный тул уносит и системный промпт, и всю историю.
+- A: «любое изменение обнуляет всё» — слишком широко. Смена `tool_choice` или содержимого сообщений оставляет верхние уровни живыми; иерархия для этого и существует.
+- C: окно просмотра — про число блоков между точками кеширования, а не про добавление тула.
+- D: маршрутизации по набору тулов не существует.
+Источник: https://platform.claude.com/docs/en/build-with-claude/prompt-caching — «the cache follows the hierarchy: `tools` → `system` → `messages`. Changes at each level invalidate that level and all subsequent levels.»
+
+**111 · C** · PC 6. Срок считается от **начала** запроса, а не от конца ответа. Генерация съедает его наравне с простоем: при пятиминутном сроке и ответе, который стримится четыре с половиной минуты, остаётся около половины минуты.
+- A: срок по умолчанию — пять минут, не одна.
+- B: продление не зависит от того, стримится ответ или нет.
+- D: новая запись не вытесняет прежнюю, записи по разным префиксам сосуществуют.
+Источник: https://platform.claude.com/docs/en/build-with-claude/prompt-caching — «The lifetime is measured from the start of the request that writes or reads the cache entry, not from the end of its response. Time spent generating a response counts against the lifetime: if a response takes 4 minutes to stream, a follow-up request that reuses the same cached prefix must start within about 1 minute of that response completing.»
+
+**112 · A** · PC 7. Запись становится читаемой с момента, когда **начался** первый ответ, а не когда он завершился. Двадцать одновременных запросов пишут каждый свою запись и все платят полную цену.
+- B: разные экземпляры с отдельными кешами — правдоподобное, но выдуманное объяснение.
+- C: четыре — лимит точек кеширования в одном запросе, к конкурентности отношения не имеет.
+- D: «ничего не сломано» неверно: на этой партии двадцать полных оплат вместо одной.
+Источник: https://platform.claude.com/docs/en/build-with-claude/prompt-caching — «For concurrent requests, note that a cache entry only becomes available after the first response begins. If you need cache hits for parallel requests, wait for the first response before sending subsequent requests.»
+
+**113 · D** · PC 8. Поле входных токенов показывает остаток после последней точки кеширования, а не весь промпт. Полный размер — сумма трёх счётчиков. Маленькое значение при длинной истории означает, что кеш работает, а не что история потерялась.
+- A: принять остаток за полный размер — самая дорогая ошибка здесь: по ней делают вывод, что контекст усох, и ищут несуществующую проблему.
+- B: граница проходит по последней точке кеширования, а не по ходу диалога.
+- C: ограничения сверху у этого поля нет.
+Источник: https://platform.claude.com/docs/en/build-with-claude/prompt-caching — «The `input_tokens` field represents only the tokens that come **after the last cache breakpoint** in your request - not all the input tokens you sent.»
+Источник: https://platform.claude.com/docs/en/build-with-claude/prompt-caching — «total_input_tokens = cache_read_input_tokens + cache_creation_input_tokens + input_tokens».
+
 ---
 
 # Часть 3 — подсчёт и диагностика
 
 ## Ответы одной строкой
 
-| 1–15 | 16–30 | 31–45 | 46–60 | 61–75 |
-|---|---|---|---|---|
-| B C A D B D A A C C A B C D B | C A D B A C D B A C B D C A B | C B A D B C A D C A C D A C B | B D A C D B A C B A D C B A C | A C B D A C B A D B C A D B C |
+| 1–15 | 16–30 | 31–45 | 46–60 |
+|---|---|---|---|
+| B C A D B D A A C C A B C D B | C A D B A C D B A C B D C A B | C B A D B C A D C A C D A C B | B D A C D B A C B A D C B A C |
+
+| 61–75 | 76–90 | 91–105 | 106–113 |
+|---|---|---|---|
+| A C B D A C B A D B C A D B C | B D A C B A C D B C A D B C A | B D A C B A C D A C B D A B B | B C A D B C A D |
 
 ## Результат по доменам
 
 | Домен | Номера вопросов | Всего | Твой результат |
 |---|---|---|---|
-| 1 · Agentic Architecture & Orchestration | 1, 2, 3, 4, 11, 14, 16, 17, 18, 19, 20, 21, 22, 23, 57, 58, 73, 74, 75 | 19 | |
-| 2 · Tool Design & MCP Integration | 12, 13, 24, 26, 27, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69 | 16 | |
-| 3 · Claude Code & Developer Workflow | 31, 32, 33, 34, 35, 36, 37, 38, 39, 41, 43, 45, 70, 71, 72 | 15 | |
-| 4 · Prompt Engineering & Structured Output | 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56 | 11 | |
-| 5 · Context Management & Reliability | 5, 6, 7, 8, 9, 10, 15, 25, 28, 29, 30, 40, 42, 44 | 14 | |
+| 1 · Agentic Architecture & Orchestration | 1, 2, 3, 4, 11, 14, 16, 17, 18, 19, 20, 21, 22, 23, 42, 43, 71, 72, 89, 90, 91, 92, 93, 94, 95, 96, 97 | 27 | |
+| 2 · Tool Design & MCP Integration | 12, 13, 24, 26, 27, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 86, 87, 88 | 20 | |
+| 3 · Claude Code & Developer Workflow | 31, 32, 33, 34, 35, 36, 37, 38, 39, 41, 45, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85 | 21 | |
+| 4 · Prompt Engineering & Structured Output | 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 73, 75, 99, 100, 101, 102 | 19 | |
+| 5 · Context Management & Reliability | 5, 6, 7, 8, 9, 10, 15, 25, 28, 29, 30, 40, 44, 74, 98, 103, 104, 105 | 18 | |
+| 6 · Промпт-кеширование (вне блюпринта) | 106, 107, 108, 109, 110, 111, 112, 113 | 8 | |
 
-Пять блоков из шести. Домен 2 уже на целевом весе; в последнем блоке добираются домены 4 (нужно ещё 7), 1 (5) и 3 (3).
+Домены 1–5 оцениваются, домен 6 вне блюпринта. Доли по 105 оцениваемым вопросам: D1 26%, D2 19%, D3 20%, D4 18%, D5 17% — против блюпринта 27 / 18 / 20 / 20 / 15.
+
+## Покрытие task statements
+
+Все 30 task statements закрыты. По три-четыре вопроса на каждый, кроме тех, где гайд даёт узкую тему.
 
 ## Что делать с результатом
 
