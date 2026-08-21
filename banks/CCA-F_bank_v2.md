@@ -382,12 +382,12 @@ A legal-operations team processes supplier contracts: 40 to 200 pages each, PDFs
 - C. Structured outputs, which constrain the decoding itself to a schema you supply
 - D. An instruction to reply with JSON only, reinforced by three worked examples
 
-**50.** Your schema needs `liability_cap_usd` to be a number of at least zero, and `contract_term_months` between 1 and 120. You add `minimum` and `maximum` to the JSON schema. What happens?
+**50.** The schema guarantees `contract_term_months` is an integer, and one supplier's contract yields 9,999. The record loads into the database unchallenged, and nothing reviews records by hand. Where does the range check belong?
 
-- A. The constraints are enforced, and out-of-range extractions come back as null
-- B. The request is rejected, because a schema cannot mix type and numeric constraints
-- C. The constraints are enforced only when the field is marked as required
-- D. Numeric constraints are unsupported, so the range has to be checked downstream
+- A. In the JSON schema, as numeric bounds the extracted values must satisfy
+- B. In the prompt, as an instruction giving the plausible range for each field
+- C. In a second model call that checks each record for implausible values
+- D. In the loader, which rejects out-of-range records into a review queue
 
 **51.** The pipeline has two separate reliability problems: the extraction record must match your database schema, and a `lookup_supplier` tool is being called with malformed arguments. Which mechanism addresses which?
 
@@ -507,7 +507,7 @@ Your platform team maintains an assistant that engineers across the company use 
 - C. Approvals committed to the repo are ignored until the workspace is trusted
 - D. Project-scoped servers require explicit approval on every machine, every session
 
-**67.** The issue-tracker server ships several prompts — creating an issue, listing open PRs, requesting a review. Engineers want to trigger them directly rather than describing the intent. How do they appear?
+**67.** The issue-tracker server ships several prompts — creating an issue, listing open PRs, requesting a review. Engineers want to trigger them directly rather than describing the intent and hoping the model picks the right tool. What do you point them to?
 
 - A. As tools the model picks when the engineer's request matches their description
 - B. As slash commands, namespaced by the server name and the prompt name
@@ -888,11 +888,11 @@ Your platform team maintains an assistant that engineers across the company use 
 Источник: там же — «The `output_format` parameter has moved to `output_config.format`, and beta headers are no longer required.»
 Источник: https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices#migrating-away-from-prefilled-responses — «Starting with Claude 4.6 models […] prefilled responses (providing a partial assistant message for Claude to continue from) on the last assistant turn are no longer supported. Requests with prefilled assistant messages to these models return a 400 error.»
 
-**50 · D** · TS 4.1. Числовые ограничения `minimum`/`maximum` схема структурированного вывода не поддерживает. Гарантируются типы и обязательность полей, диапазоны — нет, поэтому проверка диапазона остаётся на твоей стороне.
-- A: «вернётся null» — привлекательное, но выдуманное поведение; поле, не прошедшее валидацию, не превращается молча в null.
-- B: тип и границы в одной схеме сочетать можно, отказа по этой причине нет.
-- C: `required` управляет обязательностью, а не диапазоном.
-- Что поддерживается: базовые типы, enum, `const`, `anyOf`/`allOf`, `$ref`, строковые форматы вроде date и uuid, `minItems` со значением 0 или 1. Что нет: рекурсивные схемы, числовые границы, `minLength`/`maxLength`, ограничения массивов сверх `minItems`, `additionalProperties` кроме `false`, внешние `$ref`.
+**50 · D** · TS 4.1. Схема гарантирует тип и обязательность поля, но не диапазон — числовые границы `minimum`/`maximum` структурированный вывод не поддерживает. Значит проверка диапазона живёт в коде, принимающем запись, и там же решается, что с ней делать: при отсутствии человека в цикле — отказ и очередь на разбор, а не молчаливая загрузка.
+- A: заманчиво и неверно ровно из-за этого ограничения. Границы в схеме не действуют, запись пройдёт как валидная, и 9999 попадёт в базу.
+- B: инструкция про диапазон повышает вероятность корректного значения, но ничего не проверяет. Без человека в цикле нужен отказ, а не пожелание.
+- C: второй вызов модели ради сравнения двух чисел — дорогая и менее надёжная замена одной строке в загрузчике.
+- Что схема поддерживает: базовые типы, enum, `const`, `anyOf`/`allOf`, `$ref`, строковые форматы вроде date и uuid, `minItems` со значением 0 или 1. Чего нет: рекурсивные схемы, числовые границы, `minLength`/`maxLength`, ограничения массивов сверх `minItems`, `additionalProperties` кроме `false`, внешние `$ref`.
 Источник: https://platform.claude.com/docs/en/build-with-claude/structured-outputs — раздел ограничений: «Not supported: Recursive schemas, Numerical constraints (`minimum`, `maximum`), String constraints (`minLength`, `maxLength`)…»
 
 **51 · B** · TS 4.1. Две разные функции под две разные задачи: JSON-вывод управляет форматом ответа модели, `strict: true` валидирует аргументы вызова тула. Они дополняют друг друга, а не заменяют.
