@@ -1437,7 +1437,17 @@
     "answer": "A",
     "scenario": "Your platform team maintains an assistant that engineers across the company use from Claude Code. It reaches the issue tracker, the metrics store, the deployment service and an internal service catalogue through MCP servers. Configuration is expected to arrive with a repository clone, and the assistant is used both interactively and from scheduled jobs.",
     "scenario_title": "Scenario 5 · Internal Developer Assistant",
-    "reference": "TS 3.4"
+    "reference": "TS 3.4",
+    "sources": [
+      {
+        "url": "https://code.claude.com/docs/en/sessions",
+        "quote": "Worktrees: run isolated parallel sessions on separate branches"
+      },
+      {
+        "url": "https://code.claude.com/docs/en/best-practices#run-multiple-claude-sessions",
+        "quote": "Worktrees: run separate CLI sessions in isolated git checkouts so edits don't collide"
+      }
+    ]
   },
   {
     "id": "cca-f-73",

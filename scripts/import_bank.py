@@ -55,9 +55,13 @@ KEY_HEADER = re.compile(
 KEY_BULLET = re.compile(r"^-\s+(?P<text>.+?)\s*$")
 # A citation under a key: `Источник: <url> — "quote"` (or `Source:`). The quote is
 # optional; both dash styles are accepted because the banks mix them.
+# The quote is greedy to the LAST closing mark, so a line carrying several quoted
+# fragments keeps them all rather than being dropped whole; a trailing period after
+# the closing mark is tolerated. Without both, one stray character silently costs the
+# citation — the failure mode is a missing link in the app, never a parse error.
 KEY_SOURCE = re.compile(
     r"^(?:Источник|Source):\s*(?P<url>https?://\S+)"
-    r"(?:\s*[—-]\s*[\"«](?P<quote>.+?)[\"»])?\s*$"
+    r"(?:\s*[—-]\s*[\"«](?P<quote>.+)[\"»]\.?)?\s*$"
 )
 REF_STRICT = re.compile(r"^((?:TS|O|PC)\s[\d.]+(?:\s*(?:и|,)\s*[\d.]+)*)\.\s+")
 REF_LOOSE = re.compile(r"^((?:TS|O|PC)\s[\d.]+)")

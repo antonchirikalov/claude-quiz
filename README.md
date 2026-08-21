@@ -115,8 +115,12 @@ Markdown sources live in `banks/`, and the JSON the app serves lives in
 | Set | Questions | What it is |
 |-----|-----------|------------|
 | `exams/cca-f/bank-v2.json` | 75 | The main CCA-F bank: 5 scenario blocks of 15, built to the blueprint's domain weights |
+| `exams/cca-f/caching-set-8.json` | 8 | Prompt-caching drill. The exam guide lists caching as out of scope, but candidates report being asked about it, so this covers what caching does, when it pays for itself, and what silently breaks it |
 | `exams/cca-f/sourced-set-12.json` | 12 | A short set where every item carries documentation citations |
 | `exams/cca-p/full-bank-63.json` | 63 | CCA-P, from the earlier generator — it has **not** been through the verification pass below |
+
+The themed drills are deliberately unbalanced across domains — they exist to close one
+gap each, not to simulate exam day. Use `bank-v2.json` for that.
 
 The items are original: written from the public exam guide's task statements, the
 public documentation and community reports. They are not reproductions of exam
