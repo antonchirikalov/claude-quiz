@@ -364,6 +364,11 @@ def main() -> int:
     if not args.out and not args.check:
         parser.error("either --out or --check is required")
 
+    # Domain names and the report arrow are non-ASCII; a Windows console defaults to
+    # cp1252 and would raise UnicodeEncodeError on the first print.
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+
     text = args.source.read_text(encoding="utf-8-sig")
     part1, part2, part3 = split_parts(text)
 

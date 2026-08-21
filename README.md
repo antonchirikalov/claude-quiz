@@ -108,8 +108,20 @@ A bank that can be solved without reading it is worthless. Measured per block:
 
 ## Question Sets
 
-Question sets live in `exams/<exam>/<name>.json` — one folder per exam, one file per
-set. The folder is gitignored: the app is public, the question banks are not.
+The banks ship with the app — clone, run, and there are questions to answer. Authored
+Markdown sources live in `banks/`, and the JSON the app serves lives in
+`exams/<exam>/<name>.json`:
+
+| Set | Questions | What it is |
+|-----|-----------|------------|
+| `exams/cca-f/bank-v2.json` | 75 | The main CCA-F bank: 5 scenario blocks of 15, built to the blueprint's domain weights |
+| `exams/cca-f/sourced-set-12.json` | 12 | A short set where every item carries documentation citations |
+| `exams/cca-p/full-bank-63.json` | 63 | CCA-P, from the earlier generator — it has **not** been through the verification pass below |
+
+The items are original: written from the public exam guide's task statements, the
+public documentation and community reports. They are not reproductions of exam
+questions. The study guides those task statements come from are third-party material
+and are deliberately not included here.
 
 ### Importing a Markdown bank
 
@@ -118,7 +130,7 @@ key and explanations, part 3 scoring tables — and converted with
 `scripts/import_bank.py`:
 
 ```bash
-python scripts/import_bank.py ../CCA-F_bank_v2.md --out exams/cca-f/bank-v2.json
+python scripts/import_bank.py banks/CCA-F_bank_v2.md --out exams/cca-f/bank-v2.json
 ```
 
 It joins stems and choices (part 1) with answers and explanations (part 2), takes the
@@ -231,8 +243,10 @@ app/
   schema.py         — question schema and validation, including citations
   markdown.py       — the small Markdown subset used in question text
   errors.py         — typed exceptions
+banks/
+  *.md              — authored Markdown banks (the source the importer reads)
 exams/
-  <exam>/<set>.json — question sets (gitignored)
+  <exam>/<set>.json — question sets the app serves
 scripts/
   import_bank.py                 — Markdown bank → exam JSON converter
   build_simulations.py           — bank JSON → 4-scenario exam simulations
