@@ -604,12 +604,12 @@ Your platform team runs Claude Code inside CI. On every pull request it reviews 
 - C. `-p`, without which the session waits for interactive input that never arrives
 - D. `--bare`, without which startup blocks while discovering hooks and MCP servers
 
-**80.** The maintenance job silently reported success for a week. It turned out authentication had expired and every run failed immediately. What should the workflow have checked?
+**80.** The review job needs the pull request's diff, and the team wants the job to hold as few permissions as it can. How should the diff reach Claude?
 
-- A. Whether the output contains an error string, since failures are printed as the result
-- B. The process exit status, which is non-zero when the run itself fails
-- C. Whether the session file was written, which only happens on a successful run
-- D. The `total_cost_usd` field, which is zero when no model request was made
+- A. Grant a scoped `Bash(git diff *)` rule so it can fetch the diff itself
+- B. Pipe the diff in on standard input, so the job needs no shell permission
+- C. Check the branch out and let it read the changed files with the read tool
+- D. Write the diff to a file in the workspace and name that file in the prompt
 
 **81.** A generated migration keeps failing one assertion. Two rounds of "the date handling is still wrong, please fix it properly" have not converged. What is the most effective next input?
 
@@ -1378,12 +1378,14 @@ A product-support assistant answers several million requests a month. Every requ
 - Смежное: `-p` даёт текст по умолчанию. Машинно-читаемый результат требует `--output-format json` **и** `--json-schema` вместе — валидированный объект приходит в поле `structured_output`.
 Источник: https://code.claude.com/docs/en/headless — «To run Claude Code in non-interactive mode, pass `-p` with your prompt and the CLI options you need.» И «Add the `-p` (or `--print`) flag to any `claude` command to run it non-interactively.»
 
-**80 · B** · TS 3.6. Код возврата — ноль при успехе, не ноль при провале прогона. Это то, на чём должен ветвиться скрипт, и именно этой проверки в условии не было.
-- A: сообщение об ошибке действительно печатается как результат в stdout, и это ловушка: искать его строкой можно, но контракт хрупкий, а код возврата уже есть.
-- C: файл сессии пишется и при неудачных прогонах.
-- D: `total_cost_usd` — оценка расходов, а не индикатор успеха; она к тому же клиентская и расходится с биллингом.
-- Отдельно стоит помнить: SIGTERM даёт код 143, и незавершённый ход остаётся незавершённым — при возобновлении сессии он продолжится.
-Источник: https://code.claude.com/docs/en/headless — «Claude Code exits with code 0 on success and a non-zero code when the run fails, so your scripts can branch on the exit status.» И «When a failure happens inside the run, such as missing authentication, Claude Code prints the failure as the result on stdout.»
+**80 · B** · TS 3.6. Неинтерактивный режим читает stdin, поэтому diff подаётся туда как обычному инструменту командной строки. Тогда прогону вообще не нужно разрешение на оболочку — а любое выданное разрешение это то, чем можно воспользоваться не по назначению.
+- A: правило `Bash(git diff *)` — документированный путь, когда команды git агенту действительно нужны, и в нём есть своя тонкость: пробел перед `*` обязателен, иначе шаблон захватит и `git diff-index`. Но здесь просили минимум прав, а этот вариант их выдаёт.
+- C: чекаут даёт файлы, но не разницу с базой: по содержимому файла не видно, что в нём изменилось в этом PR.
+- D: работает и близко к верному, но требует и записи в рабочий каталог, и разрешения на чтение файла; stdin не требует ни того, ни другого.
+- Ограничение, которое стоит знать: stdin ограничен 10 МБ. Для большего входа файл и путь в промпте — как раз тот случай, когда вариант D становится правильным.
+Источник: https://code.claude.com/docs/en/headless — «Non-interactive mode reads stdin, so you can pipe data in and redirect the response out like any other command-line tool.»
+Источник: https://code.claude.com/docs/en/headless — про сборочный скрипт с `git diff main | claude -p`: «Piping the diff means Claude doesn't need Bash permission to read it».
+Источник: https://code.claude.com/docs/en/headless — «Piped stdin is capped at 10MB. […] To work with larger inputs, write the content to a file and reference the file path in your prompt instead of piping it.»
 
 **81 · A** · TS 3.5. Итеративная доработка сходится, когда у агента есть проверка, которую он может запустить сам. Имя падающего теста и его вывод — это сигнал pass/fail; «почини как надо» — нет.
 - B: капс и «IMPORTANT» повышают адгезию к инструкции, но инструкция здесь и не была проблемой.
