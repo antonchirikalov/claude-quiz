@@ -1,3 +1,6 @@
+import re
+
+
 def test_index_returns_200(client):
     resp = client.get("/")
     assert resp.status_code == 200
@@ -114,6 +117,7 @@ def test_answer_unanswered_redirects_to_question(client):
 
 # --- multiple response ---
 
+
 def test_multi_question_renders_checkboxes_and_hint(client):
     resp = client.get("/question/test-q-003")
     body = resp.data.decode()
@@ -144,6 +148,7 @@ def test_multi_submit_wrong_pair_is_incorrect(client):
 
 # --- results ---
 
+
 def test_results_no_session_redirects(client):
     resp = client.get("/results")
     assert resp.status_code == 302
@@ -173,6 +178,7 @@ def test_live_score_counts_multi_correctly(client):
 
 # --- question navigator ---
 
+
 def test_question_page_renders_navigator(client):
     body = client.get("/question/test-q-001").data.decode()
     assert 'class="qnav"' in body
@@ -184,7 +190,7 @@ def test_navigator_links_answered_questions_to_the_answer_page(client):
     client.post("/question/test-q-001", data={"choice": "B"})
     body = client.get("/question/test-q-002").data.decode()
     assert '/answer/test-q-001"' in body
-    assert 'state-correct' in body
+    assert "state-correct" in body
 
 
 def test_navigator_marks_a_wrong_answer(client):
@@ -225,6 +231,7 @@ def test_navigator_marks_multi_response_questions(client):
 
 # --- structured explanation and sources ---
 
+
 def test_answer_page_splits_lead_from_distractor_points(client):
     client.post("/question/test-q-003", data={"choice": ["B", "D"]})
     body = client.get("/answer/test-q-003").data.decode()
@@ -248,3 +255,46 @@ def test_answer_page_without_sources_has_no_docs_block(client):
     client.post("/question/test-q-001", data={"choice": "B"})
     body = client.get("/answer/test-q-001").data.decode()
     assert "Read it in the docs" not in body
+
+
+PRIMARY_NEXT = re.compile(r'<a href="([^"]+)" class="btn btn-primary">\s*Next Question')
+
+
+def primary_next_href(body: str) -> str:
+    """The target of the page's main Next button, and only that."""
+    match = PRIMARY_NEXT.search(body)
+    assert match, "no primary Next button on the page"
+    return match.group(1)
+
+
+def test_next_advances_in_order_after_jumping(client):
+    """Answering a question reached from the navigator continues from there.
+
+    Bank order is 001, 002, 004, 003. Jumping to 004 and answering it used to send
+    the primary button to the first unanswered question from the top of the bank,
+    so the reader was thrown back to 001 instead of moving on to 003.
+    """
+    client.post("/question/test-q-004", data={"choice": "B"})
+    body = client.get("/answer/test-q-004").data.decode()
+    assert primary_next_href(body) == "/question/test-q-003"
+
+
+def test_first_unanswered_offered_separately_after_a_jump(client):
+    client.post("/question/test-q-004", data={"choice": "B"})
+    body = client.get("/answer/test-q-004").data.decode()
+    assert "First unanswered" in body
+    assert "/question/test-q-001" in body
+
+
+def test_no_first_unanswered_link_when_it_is_the_next_one(client):
+    """Answering in order leaves the two targets identical, so don't offer both."""
+    client.post("/question/test-q-001", data={"choice": "B"})
+    body = client.get("/answer/test-q-001").data.decode()
+    assert "First unanswered" not in body
+
+
+def test_next_points_at_the_answer_page_for_an_answered_question(client):
+    client.post("/question/test-q-004", data={"choice": "B"})
+    client.post("/question/test-q-003", data={"choice": ["B", "D"]})
+    body = client.get("/answer/test-q-004").data.decode()
+    assert primary_next_href(body) == "/answer/test-q-003"

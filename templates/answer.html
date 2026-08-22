@@ -72,10 +72,19 @@
   {% endif %}
 
   <div class="navigation">
-    {% if next_question %}
-      <a href="{{ url_for('quiz.question', qid=next_question.id) }}" class="btn btn-primary">Next Question →</a>
+    {# Advance in bank order. Jumping to a question from the navigator and answering it
+       has to continue from there, not from wherever the earliest gap happens to be. #}
+    {% if next_in_order %}
+      {% set next_route = 'quiz.answer' if next_in_order.id in answered else 'quiz.question' %}
+      <a href="{{ url_for(next_route, qid=next_in_order.id) }}" class="btn btn-primary">Next Question →</a>
     {% else %}
       <a href="{{ url_for('quiz.results') }}" class="btn btn-primary">View Results →</a>
+    {% endif %}
+    {# Only worth offering when it isn't the same place the primary button goes. #}
+    {% if next_question and (not next_in_order or next_question.id != next_in_order.id) %}
+      <a href="{{ url_for('quiz.question', qid=next_question.id) }}" class="btn btn-secondary">
+        First unanswered ({{ next_question_number }}) →
+      </a>
     {% endif %}
   </div>
 </article>

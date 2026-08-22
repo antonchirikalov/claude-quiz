@@ -200,6 +200,7 @@ def answer(qid: str):
         answered=answered,
         chosen=chosen,
         next_question=nxt,
+        next_question_number=questions.index(nxt) + 1 if nxt else None,
         q_number=questions.index(q) + 1,
         total=total,
         remaining=remaining,
