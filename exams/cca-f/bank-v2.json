@@ -2076,7 +2076,7 @@
   {
     "id": "cca-f-106",
     "domain": "6 · Промпт-кеширование (вне блюпринта)",
-    "stem": "A support agent sends the same 6,000-token system prompt on every request and marks it for caching. Across thousands of requests the cache-read token count stays at zero. The prompt's first line reads `Current time: 2026-08-21 14:02:11`. What is happening?",
+    "stem": "The shared system prompt is marked for caching, and across thousands of requests the cache-read token count stays at zero. Its first line reads `Current time: 2026-08-22 14:02:11`. What is happening?",
     "choices": {
       "A": "The marker sits on the wrong block, so the system prompt is never written to the cache",
       "B": "The prefix differs every request, so a later request has nothing it can match against",
@@ -2085,6 +2085,8 @@
     },
     "explanation": "Кеш — совпадение префикса по байтам, а метка времени стоит в первой строке. Каждый запрос строит новый префикс, и совпасть ему не с чем. Ошибок при этом не возвращается — счётчик чтений просто остаётся нулевым, и это главный диагностический признак.\n- A: расположение метки важно, но при меняющемся содержимом правильное расположение ничего не спасёт.\n- C: 6000 токенов выше любого из минимумов, при которых запись пропускается.\n- D: истечение срока давало бы промахи при редких запросах, а здесь их тысячи и ноль абсолютный.",
     "answer": "B",
+    "scenario": "A product-support assistant answers several million requests a month. Every request carries the same large system prompt: product documentation, tone rules and a long tool list. Traffic arrives from the web app, the mobile app and an overnight reporting job, and the same prompt assembly code serves all three. The team has been asked to cut cost per request and first-token latency without changing what the assistant answers.",
+    "scenario_title": "Scenario 8 · Cost Control on a High-Volume Assistant",
     "reference": "PC 1",
     "sources": [
       {
@@ -2105,6 +2107,8 @@
     },
     "explanation": "Стабильное раньше, изменчивое позже: динамика ставится после последней точки кеширования, и всё, что до неё, продолжает читаться из кеша.\n- A: верх системного промпта — худшее место, оттуда изменение обнуляет весь префикс.\n- B: описания тулов — самый первый уровень префикса, изменение там дороже всего.\n- D: динамика и кеширование сочетаются штатно, вопрос только в порядке.",
     "answer": "C",
+    "scenario": "A product-support assistant answers several million requests a month. Every request carries the same large system prompt: product documentation, tone rules and a long tool list. Traffic arrives from the web app, the mobile app and an overnight reporting job, and the same prompt assembly code serves all three. The team has been asked to cut cost per request and first-token latency without changing what the assistant answers.",
+    "scenario_title": "Scenario 8 · Cost Control on a High-Volume Assistant",
     "reference": "PC 2",
     "sources": [
       {
@@ -2116,7 +2120,7 @@
   {
     "id": "cca-f-108",
     "domain": "6 · Промпт-кеширование (вне блюпринта)",
-    "stem": "A classification service receives one unrelated 800-token document per request. Nothing is shared between requests except a two-sentence instruction. Should caching be switched on?",
+    "stem": "A second, smaller endpoint tags incoming tickets: one unrelated 800-token transcript per request, with nothing shared between requests but a two-sentence instruction. Should caching be switched on there too?",
     "choices": {
       "A": "No — with no reusable prefix a marker buys the write premium and never earns it",
       "B": "Yes — each document is cached, so a repeat submission of the same one costs less",
@@ -2125,6 +2129,8 @@
     },
     "explanation": "Кеш платит за себя повторным чтением одного и того же префикса. Общего здесь два предложения — этого не хватит даже на минимальный размер записи, а документ каждый раз новый.\n- B: кешируется префикс запроса, а не документы как содержимое.\n- C: «бесплатно, когда запись есть» неверно: запись платная, и двух предложений на неё не хватит.\n- D: сортировка сближает похожие документы, а кеш требует побайтового совпадения, не похожести.",
     "answer": "A",
+    "scenario": "A product-support assistant answers several million requests a month. Every request carries the same large system prompt: product documentation, tone rules and a long tool list. Traffic arrives from the web app, the mobile app and an overnight reporting job, and the same prompt assembly code serves all three. The team has been asked to cut cost per request and first-token latency without changing what the assistant answers.",
+    "scenario_title": "Scenario 8 · Cost Control on a High-Volume Assistant",
     "reference": "PC 3",
     "sources": [
       {
@@ -2145,6 +2151,8 @@
     },
     "explanation": "Запись на сроке по умолчанию — 1.25× базовой цены входа, чтение — 0.1×. Два запроса: 1.25 + 0.1 = 1.35 против 2.0 без кеша. Окупается со второго обращения.\n- A: запись дороже обычного запроса, а не равна ему.\n- B: надбавка — четверть базовой цены, а не кратность.\n- C: на часовом сроке запись стоит 2×, и окупаемость наступает позже, примерно с третьего обращения. Часовой вариант нужен для трафика с провалами, а не для быстрой окупаемости — вариант переворачивает соотношение.",
     "answer": "D",
+    "scenario": "A product-support assistant answers several million requests a month. Every request carries the same large system prompt: product documentation, tone rules and a long tool list. Traffic arrives from the web app, the mobile app and an overnight reporting job, and the same prompt assembly code serves all three. The team has been asked to cut cost per request and first-token latency without changing what the assistant answers.",
+    "scenario_title": "Scenario 8 · Cost Control on a High-Volume Assistant",
     "reference": "PC 4",
     "sources": [
       {
@@ -2165,6 +2173,8 @@
     },
     "explanation": "Префикс собирается в порядке `tools` → `system` → `messages`, и изменение на уровне обнуляет этот уровень и все следующие. Тулы — первый, поэтому один добавленный тул уносит и системный промпт, и всю историю.\n- A: «любое изменение обнуляет всё» — слишком широко. Смена `tool_choice` или содержимого сообщений оставляет верхние уровни живыми; иерархия для этого и существует.\n- C: окно просмотра — про число блоков между точками кеширования, а не про добавление тула.\n- D: маршрутизации по набору тулов не существует.",
     "answer": "B",
+    "scenario": "A product-support assistant answers several million requests a month. Every request carries the same large system prompt: product documentation, tone rules and a long tool list. Traffic arrives from the web app, the mobile app and an overnight reporting job, and the same prompt assembly code serves all three. The team has been asked to cut cost per request and first-token latency without changing what the assistant answers.",
+    "scenario_title": "Scenario 8 · Cost Control on a High-Volume Assistant",
     "reference": "PC 5",
     "sources": [
       {
@@ -2185,6 +2195,8 @@
     },
     "explanation": "Срок считается от **начала** запроса, а не от конца ответа. Генерация съедает его наравне с простоем: при пятиминутном сроке и ответе, который стримится четыре с половиной минуты, остаётся около половины минуты.\n- A: срок по умолчанию — пять минут, не одна.\n- B: продление не зависит от того, стримится ответ или нет.\n- D: новая запись не вытесняет прежнюю, записи по разным префиксам сосуществуют.",
     "answer": "C",
+    "scenario": "A product-support assistant answers several million requests a month. Every request carries the same large system prompt: product documentation, tone rules and a long tool list. Traffic arrives from the web app, the mobile app and an overnight reporting job, and the same prompt assembly code serves all three. The team has been asked to cut cost per request and first-token latency without changing what the assistant answers.",
+    "scenario_title": "Scenario 8 · Cost Control on a High-Volume Assistant",
     "reference": "PC 6",
     "sources": [
       {
@@ -2205,6 +2217,8 @@
     },
     "explanation": "Запись становится читаемой с момента, когда **начался** первый ответ, а не когда он завершился. Двадцать одновременных запросов пишут каждый свою запись и все платят полную цену.\n- B: разные экземпляры с отдельными кешами — правдоподобное, но выдуманное объяснение.\n- C: четыре — лимит точек кеширования в одном запросе, к конкурентности отношения не имеет.\n- D: «ничего не сломано» неверно: на этой партии двадцать полных оплат вместо одной.",
     "answer": "A",
+    "scenario": "A product-support assistant answers several million requests a month. Every request carries the same large system prompt: product documentation, tone rules and a long tool list. Traffic arrives from the web app, the mobile app and an overnight reporting job, and the same prompt assembly code serves all three. The team has been asked to cut cost per request and first-token latency without changing what the assistant answers.",
+    "scenario_title": "Scenario 8 · Cost Control on a High-Volume Assistant",
     "reference": "PC 7",
     "sources": [
       {
@@ -2216,7 +2230,7 @@
   {
     "id": "cca-f-113",
     "domain": "6 · Промпт-кеширование (вне блюпринта)",
-    "stem": "An agent has been running for hours over a long conversation. The last response reports 4,000 input tokens, which is far smaller than the conversation obviously is. How should that number be read?",
+    "stem": "An escalated session has been running for hours. Its last response reports 4,000 input tokens, far smaller than the conversation obviously is. How should that number be read?",
     "choices": {
       "A": "As the total prompt size, meaning the history must have been compacted along the way",
       "B": "As the newest turn only, because earlier turns are never counted again once cached",
@@ -2225,6 +2239,8 @@
     },
     "explanation": "Поле входных токенов показывает остаток после последней точки кеширования, а не весь промпт. Полный размер — сумма трёх счётчиков. Маленькое значение при длинной истории означает, что кеш работает, а не что история потерялась.\n- A: принять остаток за полный размер — самая дорогая ошибка здесь: по ней делают вывод, что контекст усох, и ищут несуществующую проблему.\n- B: граница проходит по последней точке кеширования, а не по ходу диалога.\n- C: ограничения сверху у этого поля нет.",
     "answer": "D",
+    "scenario": "A product-support assistant answers several million requests a month. Every request carries the same large system prompt: product documentation, tone rules and a long tool list. Traffic arrives from the web app, the mobile app and an overnight reporting job, and the same prompt assembly code serves all three. The team has been asked to cut cost per request and first-token latency without changing what the assistant answers.",
+    "scenario_title": "Scenario 8 · Cost Control on a High-Volume Assistant",
     "reference": "PC 8",
     "sources": [
       {

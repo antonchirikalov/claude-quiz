@@ -791,12 +791,15 @@ A financial-services firm files quarterly regulatory reports. A coordinator agen
 - B. An error result naming what failed and whether it is retryable, for the coordinator
 - C. A halt of the entire run, since a missing subsidiary invalidates the consolidation
 - D. The subsidiary's figures from the previous quarter, flagged as carried forward
-## Domain 6 · Промпт-кеширование (вне блюпринта)
+## Scenario 8 · Cost Control on a High-Volume Assistant
 
+A product-support assistant answers several million requests a month. Every request carries the same large system prompt: product documentation, tone rules and a long tool list. Traffic arrives from the web app, the mobile app and an overnight reporting job, and the same prompt assembly code serves all three. The team has been asked to cut cost per request and first-token latency without changing what the assistant answers.
+
+> Восемь вопросов вместо пятнадцати: это дополнительный блок, а не полноценный сценарий для симуляции.
 > Exam Guide v1.0 относит кеширование к **Out-of-Scope** — «beyond knowing it exists». Но сдававшие сообщают, что вопросы по нему на экзамене были, поэтому блок в банке есть. Он помечен отдельным доменом, чтобы не искажать веса пяти оцениваемых доменов.
 > Глубина сознательно ограничена: что кеш делает, когда уместен, что его ломает, как считается экономика. Минимальные размеры префикса по моделям, окно просмотра в 20 блоков и прогрев через `max_tokens: 0` существуют, но за границей подтверждённого.
 
-**106.** A support agent sends the same 6,000-token system prompt on every request and marks it for caching. Across thousands of requests the cache-read token count stays at zero. The prompt's first line reads `Current time: 2026-08-21 14:02:11`. What is happening?
+**106.** The shared system prompt is marked for caching, and across thousands of requests the cache-read token count stays at zero. Its first line reads `Current time: 2026-08-22 14:02:11`. What is happening?
 
 - A. The marker sits on the wrong block, so the system prompt is never written to the cache
 - B. The prefix differs every request, so a later request has nothing it can match against
@@ -810,7 +813,7 @@ A financial-services firm files quarterly regulatory reports. A coordinator agen
 - C. In the messages, after the last breakpoint, so nothing ahead of them ever changes
 - D. Nowhere — a request carrying per-request values cannot also benefit from caching
 
-**108.** A classification service receives one unrelated 800-token document per request. Nothing is shared between requests except a two-sentence instruction. Should caching be switched on?
+**108.** A second, smaller endpoint tags incoming tickets: one unrelated 800-token transcript per request, with nothing shared between requests but a two-sentence instruction. Should caching be switched on there too?
 
 - A. No — with no reusable prefix a marker buys the write premium and never earns it
 - B. Yes — each document is cached, so a repeat submission of the same one costs less
@@ -845,7 +848,7 @@ A financial-services firm files quarterly regulatory reports. A coordinator agen
 - C. Cap concurrency at four, matching the number of breakpoints a request may carry
 - D. Nothing is wrong: the reads will appear on the next batch, once an entry has been written
 
-**113.** An agent has been running for hours over a long conversation. The last response reports 4,000 input tokens, which is far smaller than the conversation obviously is. How should that number be read?
+**113.** An escalated session has been running for hours. Its last response reports 4,000 input tokens, far smaller than the conversation obviously is. How should that number be read?
 
 - A. As the total prompt size, meaning the history must have been compacted along the way
 - B. As the newest turn only, because earlier turns are never counted again once cached
