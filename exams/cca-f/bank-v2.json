@@ -1232,18 +1232,24 @@
   {
     "id": "cca-f-62",
     "domain": "2 · Tool Design & MCP Integration",
-    "stem": "The issue tracker and the service catalogue both expose a tool called `search`. An engineer expects one of them to shadow the other. What actually happens?",
+    "stem": "The `.mcp.json` is committed so every engineer gets the same servers. One of them authenticates with an API token that differs per engineer. What goes in the committed file?",
     "choices": {
-      "A": "The server that connected first wins, and the later one's tool is unavailable",
-      "B": "Claude Code appends a numeric suffix, so the second becomes `search_1`",
-      "C": "Both remain callable, because the server name is part of each tool's name",
-      "D": "The collision is reported at startup and both servers refuse to connect"
+      "A": "The token itself, since the repository is private to the team",
+      "B": "A placeholder each engineer replaces in their own working copy",
+      "C": "An `${ENV_VAR}` reference, expanded from each engineer's environment",
+      "D": "Nothing — that server moves to personal scope, keeping its token out of git"
     },
-    "explanation": "Коллизии между серверами не бывает по построению: вызываемое имя тула включает имя сервера — `mcp__<сервер>__<тул>`. Два `search` от разных серверов — это два разных имени.\n- A: «кто первый подключился» — выдуманное правило разрешения конфликта.\n- B: числовой суффикс существует, но применяется к именам **серверов** при импорте из Claude Desktop, когда сервер с таким именем уже есть. К тулам он не относится — узнаваемая деталь, поставленная не на своё место.\n- D: отказ подключения из-за совпадения имён тулов не предусмотрен.",
+    "explanation": "Подстановка переменных окружения существует ровно для этого случая: файл остаётся общим и закоммиченным, а секрет берётся из окружения каждого инженера. Синтаксис `${VAR}`, и `${VAR:-default}` даёт значение по умолчанию; работает в полях `command`, `args` и `env`.\n- D: **самый сильный из неверных** — он действительно убирает токен из git, но платит тем, ради чего project-scope и существует: конфигурация перестаёт быть общей, и каждый снова добавляет сервер руками. Это возврат к проблеме из вопроса 61.\n- A: приватность репозитория не делает его хранилищем секретов, а токен остаётся в истории навсегда, даже если файл потом поправят.\n- B: заглушка требует ручной правки на каждой машине и оставляет изменённый рабочий файл, который однажды закоммитят обратно.",
     "answer": "C",
     "scenario": "Your platform team maintains an assistant that engineers across the company use from Claude Code. It reaches the issue tracker, the metrics store, the deployment service and an internal service catalogue through MCP servers. Configuration is expected to arrive with a repository clone, and the assistant is used both interactively and from scheduled jobs.",
     "scenario_title": "Scenario 5 · Internal Developer Assistant",
-    "reference": "TS 2.4"
+    "reference": "TS 2.4",
+    "sources": [
+      {
+        "url": "https://code.claude.com/docs/en/mcp",
+        "quote": "Claude Code supports environment variable expansion in `.mcp.json` files, allowing teams to share configurations while maintaining flexibility for machine-specific paths and sensitive values like API keys."
+      }
+    ]
   },
   {
     "id": "cca-f-63",

@@ -472,12 +472,12 @@ Your platform team maintains an assistant that engineers across the company use 
 - C. In `.claude/settings.json` under an `mcpServers` key, committed with it
 - D. In a setup script in the repository that each engineer runs once after cloning
 
-**62.** The issue tracker and the service catalogue both expose a tool called `search`. An engineer expects one of them to shadow the other. What actually happens?
+**62.** The `.mcp.json` is committed so every engineer gets the same servers. One of them authenticates with an API token that differs per engineer. What goes in the committed file?
 
-- A. The server that connected first wins, and the later one's tool is unavailable
-- B. Claude Code appends a numeric suffix, so the second becomes `search_1`
-- C. Both remain callable, because the server name is part of each tool's name
-- D. The collision is reported at startup and both servers refuse to connect
+- A. The token itself, since the repository is private to the team
+- B. A placeholder each engineer replaces in their own working copy
+- C. An `${ENV_VAR}` reference, expanded from each engineer's environment
+- D. Nothing — that server moves to personal scope, keeping its token out of git
 
 **63.** The four servers expose about ninety tools between them. A colleague argues that adding a fifth server will consume a large share of the context window before the session starts. Is that right, and why?
 
@@ -1255,12 +1255,12 @@ A product-support assistant answers several million requests a month. Every requ
 Источник: https://code.claude.com/docs/en/mcp#mcp-installation-scopes — таблица: Local → «Current project only» → Shared «No» → `~/.claude.json`; Project → «Current project only» → «Yes, via version control» → «`.mcp.json` in project root»; User → «All your projects» → «No».
 Источник: https://code.claude.com/docs/en/mcp#project-scope — «Project-scoped servers enable team collaboration by storing configurations in a `.mcp.json` file at your project's root directory. […] Check `.mcp.json` into version control so everyone on your team gets the same MCP tools and services.»
 
-**62 · C** · TS 2.4. Коллизии между серверами не бывает по построению: вызываемое имя тула включает имя сервера — `mcp__<сервер>__<тул>`. Два `search` от разных серверов — это два разных имени.
-- A: «кто первый подключился» — выдуманное правило разрешения конфликта.
-- B: числовой суффикс существует, но применяется к именам **серверов** при импорте из Claude Desktop, когда сервер с таким именем уже есть. К тулам он не относится — узнаваемая деталь, поставленная не на своё место.
-- D: отказ подключения из-за совпадения имён тулов не предусмотрен.
-Источник: https://code.claude.com/docs/en/mcp — формат вызываемого имени: `mcp__plugin_my-plugin_database-tools__query`, и «Use this full name when referencing the tool in permission rules, a skill's `allowed-tools` list, a subagent's `tools` field, or a hook matcher.»
-Источник: там же, про импорт из Claude Desktop — «If servers with the same names already exist, they get a numerical suffix (for example, `server_1`)».
+**62 · C** · TS 2.4. Подстановка переменных окружения существует ровно для этого случая: файл остаётся общим и закоммиченным, а секрет берётся из окружения каждого инженера. Синтаксис `${VAR}`, и `${VAR:-default}` даёт значение по умолчанию; работает в полях `command`, `args` и `env`.
+- D: **самый сильный из неверных** — он действительно убирает токен из git, но платит тем, ради чего project-scope и существует: конфигурация перестаёт быть общей, и каждый снова добавляет сервер руками. Это возврат к проблеме из вопроса 61.
+- A: приватность репозитория не делает его хранилищем секретов, а токен остаётся в истории навсегда, даже если файл потом поправят.
+- B: заглушка требует ручной правки на каждой машине и оставляет изменённый рабочий файл, который однажды закоммитят обратно.
+Источник: https://code.claude.com/docs/en/mcp — «Claude Code supports environment variable expansion in `.mcp.json` files, allowing teams to share configurations while maintaining flexibility for machine-specific paths and sensitive values like API keys.»
+Источник: там же — «`${VAR}`: expands to the value of environment variable `VAR`; `${VAR:-default}`: expands to `VAR` if set, otherwise uses `default`».
 
 **63 · B** · TS 2.4. Поиск тулов включён по умолчанию: схемы откладываются, при старте грузятся только имена тулов и инструкции сервера. Поэтому пятый сервер почти не двигает стартовый расход контекста.
 - A: это поведение **без** поиска тулов — оно осталось на отдельных платформах и при некоторых настройках, но перестало быть значением по умолчанию.
