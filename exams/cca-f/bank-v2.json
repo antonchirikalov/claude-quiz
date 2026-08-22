@@ -1014,22 +1014,22 @@
   {
     "id": "cca-f-51",
     "domain": "4 · Prompt Engineering & Structured Output",
-    "stem": "The pipeline has two separate reliability problems: the extraction record must match your database schema, and a `lookup_supplier` tool is being called with malformed arguments. Which mechanism addresses which?",
+    "stem": "Extracted records reach the loader with the right values in the wrong shape: a field renamed, a number sent as a string, an occasional extra key. The loader rejects them. What fixes the shape at the source?",
     "choices": {
-      "A": "Strict tool use covers both, since the extraction is itself performed by a tool",
-      "B": "JSON outputs govern the response format; `strict: true` validates tool inputs",
-      "C": "JSON outputs cover both, since tool arguments are part of the response format",
-      "D": "Neither: both problems are addressed by validating and retrying in your own code"
+      "A": "A post-processing step that maps each response onto the shape the loader wants",
+      "B": "Define the record as a tool's input schema and let the model return it by calling it",
+      "C": "Restate the required field names and types in the prompt, with a worked example",
+      "D": "Ask for JSON and validate it, re-running the extraction whenever validation fails"
     },
-    "explanation": "Две разные функции под две разные задачи: JSON-вывод управляет форматом ответа модели, `strict: true` валидирует аргументы вызова тула. Они дополняют друг друга, а не заменяют.\n- A: strict-режим относится к входам тулов; формат ответа он не задаёт.\n- C: аргументы тула не являются частью текстового ответа и под JSON-вывод не попадают.\n- D: своя валидация нужна для того, что схема не покрывает (см. вопрос 50), но объявлять оба механизма бесполезными неверно.",
+    "explanation": "Форма записи описывается как схема входа тула, и модель отдаёт запись, вызывая этот тул. Схема перестаёт быть пожеланием в промпте и становится контрактом вызова — это и есть тот паттерн, который блюпринт называет структурированным выводом через `tool_use` и JSON Schema.\n- A: пост-обработка приводит форму в порядок **после** того, как она разошлась. Работает, но каждое новое расхождение требует новой ветки в маппинге — починка симптома.\n- C: перечислить поля и типы в промпте полезно, но это остаётся текстовой инструкцией: «число строкой» она предотвращает вероятностно, а не структурно.\n- D: валидация с повтором — реактивный контур: он ловит брак, но платит вторым вызовом за каждый случай, который схема не допустила бы вовсе.\n- Что схема гарантирует и что нет: имена полей, типы и обязательность — да; диапазоны значений — нет, числовые границы не поддерживаются (см. вопрос 50). Поэтому проверка диапазонов остаётся в загрузчике, а вот проверка формы из него уходит.",
     "answer": "B",
     "scenario": "A legal-operations team processes supplier contracts: 40 to 200 pages each, PDFs converted to text, arriving in batches of several thousand. For each contract the pipeline must extract party names, effective and termination dates, payment terms, liability caps and renewal clauses into records that load into a database with no manual review. Fields are frequently absent, and formats vary by supplier.",
     "scenario_title": "Scenario 4 · Contract Data Extraction at Scale",
     "reference": "TS 4.3",
     "sources": [
       {
-        "url": "https://platform.claude.com/docs/en/build-with-claude/structured-outputs",
-        "quote": "JSON outputs and strict tool use solve different problems and work together: **JSON outputs** control Claude's response format (what Claude says) / **Strict tool use** validates tool parameters (how Claude calls your functions)."
+        "url": "https://platform.claude.com/docs/en/agents-and-tools/tool-use/define-tools",
+        "quote": "`input_schema` | A JSON Schema object defining the expected parameters for the tool."
       }
     ]
   },
@@ -1592,14 +1592,14 @@
   {
     "id": "cca-f-79",
     "domain": "3 · Claude Code & Developer Workflow",
-    "stem": "The nightly job should be able to read the repository and run the test command, and nothing else — no network, no writes outside the workspace, no surprises from a new tool. What gives that baseline?",
+    "stem": "A CI job that invokes Claude Code produces no output and is killed by the workflow timeout after fifteen minutes. The command, the model and the credentials are all correct. What is missing?",
     "choices": {
-      "A": "`--allowedTools` listing every tool the prompt is expected to need",
-      "B": "`acceptEdits`, which limits the run to file edits and common shell commands",
-      "C": "`dontAsk`, which denies anything outside the allow rules and read-only set",
-      "D": "Running the job in a container, since permissions are a host-level concern"
+      "A": "`--output-format json`, without which nothing reaches standard output at all",
+      "B": "`--allowedTools`, without which each tool call waits on an approval nobody gives",
+      "C": "`-p`, without which the session waits for interactive input that never arrives",
+      "D": "`--bare`, without which startup blocks while discovering hooks and MCP servers"
     },
-    "explanation": "`dontAsk` — единственный из вариантов, который задаёт **базовый уровень отказа**: запрещено всё, кроме явных allow-правил и набора read-only команд. Новый тул, появившийся в промпте, по умолчанию не пройдёт.\n- A: перечислить нужные тулы правильно и необходимо, но это allow-список без базового отказа; вопрос был про baseline.\n- B: `acceptEdits` наоборот **разрешает** записи без запроса, а не ограничивает.\n- D: контейнер изолирует хост, но внутри него агент по-прежнему делает что угодно из разрешённого.",
+    "explanation": "Симптом — ни вывода, ни завершения, только таймаут. Без `-p` (`--print`) запускается интерактивная сессия, которая ждёт ввода; на раннере вводить некому, и job висит до внешнего убийства. Это первое, что проверяется при «ничего не произошло, потом таймаут».\n- A: без `--output-format json` вывод всё равно есть, просто обычным текстом. Отсутствие *любого* вывода этим не объясняется.\n- B: правдоподобно и в других обстоятельствах бывает — но неинтерактивный прогон не показывает запросов на подтверждение, ему их некому показать. Ловушка рассчитана на перенос интерактивного опыта на CI.\n- D: `--bare` ускоряет старт, пропуская автообнаружение; без него старт медленнее, но не бесконечен.\n- Смежное: `-p` даёт текст по умолчанию. Машинно-читаемый результат требует `--output-format json` **и** `--json-schema` вместе — валидированный объект приходит в поле `structured_output`.",
     "answer": "C",
     "scenario": "Your platform team runs Claude Code inside CI. On every pull request it reviews the diff and comments; nightly it runs a maintenance pass across the monorepo. Runs are unattended, must behave identically on every runner, and must fail the build loudly rather than pass quietly. Some pull requests come from forks.",
     "scenario_title": "Scenario 6 · CI/CD & Automated Review",
@@ -1607,7 +1607,7 @@
     "sources": [
       {
         "url": "https://code.claude.com/docs/en/headless",
-        "quote": "**`dontAsk`**: Claude Code denies anything not in your `permissions.allow` rules or the read-only command set, which is useful for locked-down CI runs."
+        "quote": "To run Claude Code in non-interactive mode, pass `-p` with your prompt and the CLI options you need.» И «Add the `-p` (or `--print`) flag to any `claude` command to run it non-interactively."
       }
     ]
   },

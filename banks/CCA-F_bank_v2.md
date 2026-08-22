@@ -389,12 +389,12 @@ A legal-operations team processes supplier contracts: 40 to 200 pages each, PDFs
 - C. In a second model call that checks each record for implausible values
 - D. In the loader, which rejects out-of-range records into a review queue
 
-**51.** The pipeline has two separate reliability problems: the extraction record must match your database schema, and a `lookup_supplier` tool is being called with malformed arguments. Which mechanism addresses which?
+**51.** Extracted records reach the loader with the right values in the wrong shape: a field renamed, a number sent as a string, an occasional extra key. The loader rejects them. What fixes the shape at the source?
 
-- A. Strict tool use covers both, since the extraction is itself performed by a tool
-- B. JSON outputs govern the response format; `strict: true` validates tool inputs
-- C. JSON outputs cover both, since tool arguments are part of the response format
-- D. Neither: both problems are addressed by validating and retrying in your own code
+- A. A post-processing step that maps each response onto the shape the loader wants
+- B. Define the record as a tool's input schema and let the model return it by calling it
+- C. Restate the required field names and types in the prompt, with a worked example
+- D. Ask for JSON and validate it, re-running the extraction whenever validation fails
 
 **52.** Termination dates are absent from perhaps a third of the contracts. Right now the model sometimes omits the key, sometimes writes "not specified", and occasionally infers a date from the effective date plus the term. What should the instruction and schema require?
 
@@ -597,12 +597,12 @@ Your platform team runs Claude Code inside CI. On every pull request it reviews 
 - C. Have Claude run `exit 1` through Bash when it finds something blocking
 - D. Post the review as a PR comment and let a required reviewer decide
 
-**79.** The nightly job should be able to read the repository and run the test command, and nothing else — no network, no writes outside the workspace, no surprises from a new tool. What gives that baseline?
+**79.** A CI job that invokes Claude Code produces no output and is killed by the workflow timeout after fifteen minutes. The command, the model and the credentials are all correct. What is missing?
 
-- A. `--allowedTools` listing every tool the prompt is expected to need
-- B. `acceptEdits`, which limits the run to file edits and common shell commands
-- C. `dontAsk`, which denies anything outside the allow rules and read-only set
-- D. Running the job in a container, since permissions are a host-level concern
+- A. `--output-format json`, without which nothing reaches standard output at all
+- B. `--allowedTools`, without which each tool call waits on an approval nobody gives
+- C. `-p`, without which the session waits for interactive input that never arrives
+- D. `--bare`, without which startup blocks while discovering hooks and MCP servers
 
 **80.** The maintenance job silently reported success for a week. It turned out authentication had expired and every run failed immediately. What should the workflow have checked?
 
@@ -1180,11 +1180,13 @@ A financial-services firm files quarterly regulatory reports. A coordinator agen
 - Что схема поддерживает: базовые типы, enum, `const`, `anyOf`/`allOf`, `$ref`, строковые форматы вроде date и uuid, `minItems` со значением 0 или 1. Чего нет: рекурсивные схемы, числовые границы, `minLength`/`maxLength`, ограничения массивов сверх `minItems`, `additionalProperties` кроме `false`, внешние `$ref`.
 Источник: https://platform.claude.com/docs/en/build-with-claude/structured-outputs — раздел ограничений: «Not supported: Recursive schemas, Numerical constraints (`minimum`, `maximum`), String constraints (`minLength`, `maxLength`)…»
 
-**51 · B** · TS 4.3. Две разные функции под две разные задачи: JSON-вывод управляет форматом ответа модели, `strict: true` валидирует аргументы вызова тула. Они дополняют друг друга, а не заменяют.
-- A: strict-режим относится к входам тулов; формат ответа он не задаёт.
-- C: аргументы тула не являются частью текстового ответа и под JSON-вывод не попадают.
-- D: своя валидация нужна для того, что схема не покрывает (см. вопрос 50), но объявлять оба механизма бесполезными неверно.
-Источник: https://platform.claude.com/docs/en/build-with-claude/structured-outputs — «JSON outputs and strict tool use solve different problems and work together: **JSON outputs** control Claude's response format (what Claude says) / **Strict tool use** validates tool parameters (how Claude calls your functions).»
+**51 · B** · TS 4.3. Форма записи описывается как схема входа тула, и модель отдаёт запись, вызывая этот тул. Схема перестаёт быть пожеланием в промпте и становится контрактом вызова — это и есть тот паттерн, который блюпринт называет структурированным выводом через `tool_use` и JSON Schema.
+- A: пост-обработка приводит форму в порядок **после** того, как она разошлась. Работает, но каждое новое расхождение требует новой ветки в маппинге — починка симптома.
+- C: перечислить поля и типы в промпте полезно, но это остаётся текстовой инструкцией: «число строкой» она предотвращает вероятностно, а не структурно.
+- D: валидация с повтором — реактивный контур: он ловит брак, но платит вторым вызовом за каждый случай, который схема не допустила бы вовсе.
+- Что схема гарантирует и что нет: имена полей, типы и обязательность — да; диапазоны значений — нет, числовые границы не поддерживаются (см. вопрос 50). Поэтому проверка диапазонов остаётся в загрузчике, а вот проверка формы из него уходит.
+Источник: https://platform.claude.com/docs/en/agents-and-tools/tool-use/define-tools — «`input_schema` | A JSON Schema object defining the expected parameters for the tool.»
+Источник: https://platform.claude.com/docs/en/build-with-claude/structured-outputs — «**Strict tool use** (`strict: true`): Guarantee schema validation on tool names and inputs», то есть форму вызова можно сделать не только описанной, но и гарантированной.
 
 **52 · A** · TS 4.1. Три разных поведения на одно отсутствующее поле — это неопределённость контракта, а не модели. Явный null плюс запрет на вывод из других полей закрывают оба симптома: и непредсказуемую форму, и придуманные даты.
 - B: пропуск ключа неотличим от ошибки извлечения, а схема с обязательным полем такой ответ отвергнет.
@@ -1366,11 +1368,12 @@ A financial-services firm files quarterly regulatory reports. A coordinator agen
 - D: комментарий и обязательный ревьюер возвращают человека в цикл, который в условии просили исключить.
 Источник: https://code.claude.com/docs/en/headless — «To get output conforming to a specific schema, use `--output-format json` with `--json-schema` and a JSON Schema definition. The response includes metadata about the request (session ID, usage, etc.) with the structured output in the `structured_output` field.»
 
-**79 · C** · TS 3.6. `dontAsk` — единственный из вариантов, который задаёт **базовый уровень отказа**: запрещено всё, кроме явных allow-правил и набора read-only команд. Новый тул, появившийся в промпте, по умолчанию не пройдёт.
-- A: перечислить нужные тулы правильно и необходимо, но это allow-список без базового отказа; вопрос был про baseline.
-- B: `acceptEdits` наоборот **разрешает** записи без запроса, а не ограничивает.
-- D: контейнер изолирует хост, но внутри него агент по-прежнему делает что угодно из разрешённого.
-Источник: https://code.claude.com/docs/en/headless — «**`dontAsk`**: Claude Code denies anything not in your `permissions.allow` rules or the read-only command set, which is useful for locked-down CI runs.»
+**79 · C** · TS 3.6. Симптом — ни вывода, ни завершения, только таймаут. Без `-p` (`--print`) запускается интерактивная сессия, которая ждёт ввода; на раннере вводить некому, и job висит до внешнего убийства. Это первое, что проверяется при «ничего не произошло, потом таймаут».
+- A: без `--output-format json` вывод всё равно есть, просто обычным текстом. Отсутствие *любого* вывода этим не объясняется.
+- B: правдоподобно и в других обстоятельствах бывает — но неинтерактивный прогон не показывает запросов на подтверждение, ему их некому показать. Ловушка рассчитана на перенос интерактивного опыта на CI.
+- D: `--bare` ускоряет старт, пропуская автообнаружение; без него старт медленнее, но не бесконечен.
+- Смежное: `-p` даёт текст по умолчанию. Машинно-читаемый результат требует `--output-format json` **и** `--json-schema` вместе — валидированный объект приходит в поле `structured_output`.
+Источник: https://code.claude.com/docs/en/headless — «To run Claude Code in non-interactive mode, pass `-p` with your prompt and the CLI options you need.» И «Add the `-p` (or `--print`) flag to any `claude` command to run it non-interactively.»
 
 **80 · B** · TS 3.6. Код возврата — ноль при успехе, не ноль при провале прогона. Это то, на чём должен ветвиться скрипт, и именно этой проверки в условии не было.
 - A: сообщение об ошибке действительно печатается как результат в stdout, и это ловушка: искать его строкой можно, но контракт хрупкий, а код возврата уже есть.
